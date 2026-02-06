@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Крестики-нолики: наречия слитно/раздельно</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .game-wrapper {
+      background: var(--inner-bg, rgba(0,0,0,0.25));
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      display: grid;
+      grid-template-columns: 460px 320px;
+      gap: 24px;
+      padding: 24px 28px;
+      max-width: 820px;
+      width: 100%;
+    }
+
+    @media (max-width: 700px) {
+      .game-wrapper {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      opacity: 0.9;
+      text-align:center;
+      margin-bottom: 16px;
+    }
+
+    /* Поле 7x7 */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 6px;
+      border-radius: 16px;
+    }
+
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: var(--cell-bg) !important;
+      border-radius: 14px;
+      border: 2px solid var(--border-accent, transparent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease, border 0.2s ease;
+      user-select: none;
+    }
+
+    .cell:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+      background: rgba(20, 20, 60, 0.95);
+    }
+
+    .cell.disabled {
+      cursor: default;
+      opacity: 0.7;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .board-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status {
+      font-size: 14px;
+      text-align: center;
+      min-height: 32px;
+    }
+
+    .status strong {
+      font-weight: 600;
+    }
+
+    .score {
+      font-size: 13px;
+      opacity: 0.9;
+      text-align: center;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+      transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    button:hover {
+      background: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: #f5f5f5;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    /* Блок задания */
+    .quiz-card {
+      background: var(--card-bg) !important;
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-self: flex-start;
+      border: 2px solid var(--border-accent, transparent);
+    }
+
+    .quiz-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .adverb {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 0.03em;
+      padding: 6px 8px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .quiz-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .quiz-info {
+      font-size: 13px;
+      opacity: 0.95;
+      min-height: 32px;
+    }
+
+    .correct {
+      color: #9af7a5;
+    }
+
+    .incorrect {
+      color: #ff0033;
+      font-weight: 700;
+    }
+
+    .explanation {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .quiz-results {
+      font-size: 13px;
+      opacity: 0.95;
+      margin-top: 4px;
+    }
+
+    .quiz-mistakes {
+      font-size: 12px;
+      opacity: 0.95;
+      margin-top: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+  
+    :root {
+      --bg-grad: linear-gradient(135deg, #667eea, #764ba2);
+      --text-color: #fff;
+      --card-bg: rgba(0,0,0,0.35);
+      --cell-bg: rgba(10,10,30,0.9);
+      --border-accent: transparent;
+    }
+
+    .light-theme {
+      /* Общий фон оставляем розово-фиолетовым градиентом */
+      --bg-grad: linear-gradient(135deg, #667eea, #764ba2);
+      --text-color: #003049;
+
+      /* Игровое поле и карточка задания — молочно-жёлтые и светлые */
+      --card-bg: rgba(255,255,255,0.9);
+      --cell-bg: rgba(255,249,220,0.95);
+      --inner-bg: #fff9d9;
+      --border-accent: #ff8ab8;
+    }
+
+    body {
+      background: var(--bg-grad) !important;
+      color: var(--text-color) !important;
+    }
+
+    .quiz-card {
+      background: var(--card-bg) !important;
+    }
+
+    .cell {
+      background: var(--cell-bg) !important;
+    }
+
+    /* Базовые стили кнопок в светлой теме — компактные и контрастные */
+    .light-theme button {
+      background:#ffffff;
+      color:#b0004c;
+      border:1px solid #d93385;
+      font-weight:600;
+      padding:6px 12px;       /* кнопки стали плотнее */
+      letter-spacing:0.2px;
+      box-shadow:0 0 6px rgba(217,51,133,0.45);
+    }
+
+    .light-theme button:hover {
+      background:#ffe0f0;
+      box-shadow:0 0 10px rgba(217,51,133,0.7);
+      transform: translateY(-1px);
+    }
+
+    .light-theme .btn-secondary {
+      background:#ffeaf6;
+      border-color:#d93385;
+      color:#8a0042;
+    }
+
+    .light-theme .quiz-buttons button {
+      background:#ffeaf6;
+      border:1px solid #d93385;
+      color:#8a0042;
+      padding:6px 10px;
+      font-size:14px;
+    }
+
+    .light-theme button:disabled {
+      background:#f2f2f2;
+      color:#aaa;
+      border-color:#ccc;
+      box-shadow:none;
+      transform:none;
+    }
+
+    /* Неоновая подсветка ключевых кнопок остаётся, но мягче */
+    .light-theme #solidBtn,
+    .light-theme #separateBtn,
+    .light-theme #newGameBtn,
+    .light-theme #modeToggleBtn,
+    .light-theme #themeToggleBtn {
+      box-shadow:0 0 8px rgba(255,105,180,0.7);
+    }
+
+    /* Подсветка клеток и карточки в светлой теме */
+    .light-theme h1 {
+      text-shadow: none;
+      -webkit-text-stroke: 1.4px #003049;
+      font-weight: 800;
+    }
+
+    .light-theme .cell {
+      border-color: #1e90ff;
+      box-shadow: 0 0 10px rgba(30,144,255,0.55);
+    }
+
+    .light-theme .cell:hover {
+      background: rgba(255, 210, 230, 0.95);
+      box-shadow: 0 0 16px rgba(255, 133, 181, 0.9);
+    }
+
+    .light-theme .quiz-card {
+      border-color: #ff8ab8;
+      box-shadow: 0 0 18px rgba(255, 138, 184, 0.7);
+    }
+
+  </style>
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="board-wrapper">
+      <div>
+        <h1 style="color:#1e90ff;">НАРЕЧИЯ: слитно/раздельно</h1>
+        <div class="subtitle" style="color:white !important; opacity:1 !important;">
+          Ход игрока только за правильный ответ
+          о слитном/раздельном написании наречий.
+        </div>
+      </div>
+
+      <div class="board" id="board">
+        <!-- клетки будут созданы скриптом -->
+      </div>
+
+      <div class="status" id="status" style="color:white !important; opacity:1 !important;"></div>
+      <div class="score" id="score" style="color:white !important; opacity:1 !important;"></div>
+
+      
+    </div>
+
+    <div class="quiz-card">
+      <div class="quiz-title">Как правильно написать это наречие?</div>
+      <div class="adverb" id="adverbDisplay">…</div>
+      <div class="quiz-buttons">
+        <button id="solidBtn">Пишется слитно</button>
+        <button id="separateBtn">Пишется раздельно</button>
+      </div>
+
+      <!-- Кнопки управления -->
+      <div class="controls" style="margin-top:12px;">
+        <button id="newGameBtn" class="btn-secondary">Новая партия</button>
+        <button id="modeToggleBtn" class="btn-secondary">Переключить: 2 игрока</button>
+        <button id="themeToggleBtn" class="btn-secondary">Светлая тема</button>
+      </div>
+      <div class="quiz-info" id="quizInfo"></div>
+      <div class="quiz-results" id="quizResults" style="display:none;"></div>
+      <div id="mistakesBtnRow" style="display:none; margin-top:4px; justify-content:center;">
+        <button id="showMistakesBtn" class="btn-secondary">Показать ошибки</button>
+      </div>
+      <div class="quiz-mistakes" id="quizMistakes" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const QUESTIONS = [
+      { base: "вблизи", display: "(в)близи", type: "solid" },
+      { base: "вверх", display: "(в)верх", type: "solid" },
+      { base: "внутри", display: "(в)нутри", type: "solid" },
+      { base: "внутрь", display: "(в)нутрь", type: "solid" },
+      { base: "вовремя", display: "(во)время", type: "solid" },
+      { base: "впервые", display: "(в)первые", type: "solid" },
+      { base: "вперёд", display: "(в)перёд", type: "solid" },
+      { base: "впереди", display: "(в)переди", type: "solid" },
+      { base: "впоследствии", display: "(в)последствии", type: "solid" },
+      { base: "вправду", display: "(в)правду", type: "solid" },
+      { base: "вправе", display: "(в)праве", type: "solid" },
+      { base: "впрочем", display: "(в)прочем", type: "solid" },
+      { base: "вскоре", display: "(в)скоре", type: "solid" },
+      { base: "вслед", display: "(в)след", type: "solid" },
+      { base: "втайне", display: "(в)тайне", type: "solid" },
+      { base: "втрое", display: "(в)трое", type: "solid" },
+      { base: "втроём", display: "(в)троём", type: "solid" },
+      { base: "навек", display: "(на)век", type: "solid" },
+      { base: "наверх", display: "(на)верх", type: "solid" },
+      { base: "наверху", display: "(на)верху", type: "solid" },
+      { base: "навстречу", display: "(на)встречу", type: "solid" },
+      { base: "назавтра", display: "(на)завтра", type: "solid" },
+      { base: "назло", display: "(на)зло", type: "solid" },
+      { base: "наизусть", display: "(на)изусть", type: "solid" },
+      { base: "накануне", display: "(на)кануне", type: "solid" },
+      { base: "наконец", display: "(на)конец", type: "solid" },
+      { base: "налево", display: "(на)лево", type: "solid" },
+      { base: "наоборот", display: "(на)оборот", type: "solid" },
+      { base: "наперекор", display: "(на)перекор", type: "solid" },
+      { base: "наперёд", display: "(на)перёд", type: "solid" },
+      { base: "напоказ", display: "(на)показ", type: "solid" },
+      { base: "направо", display: "(на)право", type: "solid" },
+      { base: "напротив", display: "(на)против", type: "solid" },
+      { base: "напрямик", display: "(на)прямик", type: "solid" },
+      { base: "наугад", display: "(на)угад", type: "solid" },
+      { base: "добела", display: "(до)бела", type: "solid" },
+      { base: "доверху", display: "(до)верху", type: "solid" },
+      { base: "донельзя", display: "(до)нельзя", type: "solid" },
+      { base: "досуха", display: "(до)суха", type: "solid" },
+      { base: "досыта", display: "(до)сыта", type: "solid" },
+      { base: "дочиста", display: "(до)чиста", type: "solid" },
+      { base: "замуж", display: "(за)муж", type: "solid" },
+      { base: "заодно", display: "(за)одно", type: "solid" },
+      { base: "затем", display: "(за)тем", type: "solid" },
+      { base: "зачастую", display: "(за)частую", type: "solid" },
+      { base: "зачем", display: "(за)чем", type: "solid" },
+      { base: "откуда", display: "(от)куда", type: "solid" },
+      { base: "отсюда", display: "(от)сюда", type: "solid" },
+      { base: "оттого", display: "(от)того", type: "solid" },
+      { base: "оттуда", display: "(от)туда", type: "solid" },
+      { base: "отчасти", display: "(от)части", type: "solid" },
+      { base: "отчего", display: "(от)чего", type: "solid" },
+      { base: "повсюду", display: "(по)всюду", type: "solid" },
+      { base: "поначалу", display: "(по)началу", type: "solid" },
+      { base: "поневоле", display: "(по)неволе", type: "solid" },
+      { base: "понемногу", display: "(по)немногу", type: "solid" },
+      { base: "поровну", display: "(по)ровну", type: "solid" },
+      { base: "попросту", display: "(по)просту", type: "solid" },
+      { base: "поскорее", display: "(по)скорее", type: "solid" },
+      { base: "посреди", display: "(по)среди", type: "solid" },
+      { base: "посредине", display: "(по)средине", type: "solid" },
+      { base: "потому", display: "(по)тому", type: "solid" },
+      { base: "поочерёдно", display: "(по)очерёдно", type: "solid" },
+      { base: "почему", display: "(по)чему", type: "solid" },
+      { base: "поэтому", display: "(по)этому", type: "solid" },
+      { base: "сбоку", display: "(с)боку", type: "solid" },
+      { base: "сверху", display: "(с)верху", type: "solid" },
+      { base: "слева", display: "(с)лева", type: "solid" },
+      { base: "снаружи", display: "(с)наружи", type: "solid" },
+      { base: "сначала", display: "(с)начала", type: "solid" },
+      { base: "снизу", display: "(с)низу", type: "solid" },
+      { base: "сразу", display: "(с)разу", type: "solid" },
+      { base: "справа", display: "(с)права", type: "solid" },
+      { base: "в виде", display: "(в)виде", type: "separate" },
+      { base: "в глазах", display: "(в)глазах", type: "separate" },
+      { base: "в конце концов", display: "(в)конце концов", type: "separate" },
+      { base: "в общем", display: "(в)общем", type: "separate" },
+      { base: "в одиночку", display: "(в)одиночку", type: "separate" },
+      { base: "в открытую", display: "(в)открытую", type: "separate" },
+      { base: "в потёмках", display: "(в)потёмках", type: "separate" },
+      { base: "в розницу", display: "(в)розницу", type: "separate" },
+      { base: "в сердцах", display: "(в)сердцах", type: "separate" },
+      { base: "на бегу", display: "(на)бегу", type: "separate" },
+      { base: "на виду", display: "(на)виду", type: "separate" },
+      { base: "на глаз", display: "(на)глаз", type: "separate" },
+      { base: "на днях", display: "(на)днях", type: "separate" },
+      { base: "на лету", display: "(на)лету", type: "separate" },
+      { base: "на ощупь", display: "(на)ощупь", type: "separate" },
+      { base: "на радостях", display: "(на)радостях", type: "separate" },
+      { base: "на совесть", display: "(на)совесть", type: "separate" },
+      { base: "по двое", display: "(по)двое", type: "separate" },
+      { base: "по одному", display: "(по)одному", type: "separate" },
+      { base: "по очереди", display: "(по)очереди", type: "separate" },
+      { base: "по памяти", display: "(по)памяти", type: "separate" },
+      { base: "по праву", display: "(по)праву", type: "separate" },
+      { base: "по ходу", display: "(по)ходу", type: "separate" },
+      { base: "с виду", display: "(с)виду", type: "separate" },
+      { base: "с разбегу", display: "(с)разбегу", type: "separate" },
+      { base: "с размаху", display: "(с)размаху", type: "separate" },
+      { base: "с полуслова", display: "(с)полуслова", type: "separate" }
+    ];
+
+    const BOARD_SIZE = 7;
+    const WIN_LENGTH = BOARD_SIZE;
+
+    function index(row, col) {
+      return row * BOARD_SIZE + col;
+    }
+
+    function generateWinningLines(size, winLen) {
+      const lines = [];
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c <= size - winLen; c++) {
+          const line = [];
+          for (let k = 0; k < winLen; k++) {
+            line.push(index(r, c + k));
+          }
+          lines.push(line);
+        }
+      }
+      for (let c = 0; c < size; c++) {
+        for (let r = 0; r <= size - winLen; r++) {
+          const line = [];
+          for (let k = 0; k < winLen; k++) {
+            line.push(index(r + k, c));
+          }
+          lines.push(line);
+        }
+      }
+      for (let r = 0; r <= size - winLen; r++) {
+        for (let c = 0; c <= size - winLen; c++) {
+          const line = [];
+          for (let k = 0; k < winLen; k++) {
+            line.push(index(r + k, c + k));
+          }
+          lines.push(line);
+        }
+      }
+      for (let r = 0; r <= size - winLen; r++) {
+        for (let c = winLen - 1; c < size; c++) {
+          const line = [];
+          for (let k = 0; k < winLen; k++) {
+            line.push(index(r + k, c - k));
+          }
+          lines.push(line);
+        }
+      }
+      return lines;
+    }
+
+    const boardElement = document.getElementById('board');
+    const statusElement = document.getElementById('status');
+    const scoreElement = document.getElementById('score');
+    const newGameBtn = document.getElementById('newGameBtn');
+    const modeToggleBtn = document.getElementById('modeToggleBtn');
+
+    const adverbDisplay = document.getElementById('adverbDisplay');
+    const quizInfo = document.getElementById('quizInfo');
+    const solidBtn = document.getElementById('solidBtn');
+    const separateBtn = document.getElementById('separateBtn');
+    const quizResults = document.getElementById('quizResults');
+    const quizMistakes = document.getElementById('quizMistakes');
+    const showMistakesBtn = document.getElementById('showMistakesBtn');
+    const mistakesBtnRow = document.getElementById('mistakesBtnRow');
+
+    let board = Array(BOARD_SIZE * BOARD_SIZE).fill(null);
+    let gameOver = false;
+    let humanCanMove = false;
+    let currentQuestionIndex = null;
+
+    let gameMode = "vsComputer";
+    let currentPlayer = "X";
+
+    let correctAnswers = 0;
+    let wrongAnswers = 0;
+
+    const winningLines = generateWinningLines(BOARD_SIZE, WIN_LENGTH);
+
+    let usedQuestions = [];
+    let answeredUnique = [];
+
+    let mistakes = [];
+
+    function runSelfTests() {
+      console.assert(BOARD_SIZE === 7, 'BOARD_SIZE должен быть 7');
+      console.assert(winningLines.length > 0, 'winningLines не должен быть пустым');
+      console.assert(
+        winningLines.some(line => line.length === WIN_LENGTH),
+        'каждая выигрышная линия должна иметь длину WIN_LENGTH'
+      );
+      console.assert(
+        board.length === BOARD_SIZE * BOARD_SIZE,
+        'размер массива board должен совпадать с количеством клеток'
+      );
+    }
+
+    function createBoard() {
+      boardElement.innerHTML = '';
+      for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell disabled';
+        cell.dataset.index = i;
+        cell.addEventListener('click', onCellClick);
+        boardElement.appendChild(cell);
+      }
+    }
+
+    function updateModeLabel() {
+      if (!modeToggleBtn) return;
+      modeToggleBtn.textContent = (gameMode === "vsComputer")
+        ? "Переключить: 2 игрока"
+        : "Переключить: с компьютером";
+    }
+
+    function resetBoard() {
+      board = Array(BOARD_SIZE * BOARD_SIZE).fill(null);
+      gameOver = false;
+      humanCanMove = false;
+      usedQuestions = [];
+      answeredUnique = [];
+      mistakes = [];
+      correctAnswers = 0;
+      wrongAnswers = 0;
+      currentPlayer = "X";
+
+      quizResults.style.display = 'none';
+      quizResults.textContent = '';
+      quizMistakes.style.display = 'none';
+      quizMistakes.innerHTML = '';
+      mistakesBtnRow.style.display = 'none';
+      showMistakesBtn.textContent = 'Показать ошибки';
+      adverbDisplay.textContent = '…';
+
+      solidBtn.disabled = false;
+      separateBtn.disabled = false;
+
+      updateBoardUI();
+      updateScore();
+      if (gameMode === "vsComputer") {
+        updateStatus("Сначала ответь на вопрос — и заработай право хода против компьютера.");
+      } else {
+        updateStatus("Сначала отвечает игрок X — верный ответ даёт право хода.");
+      }
+      pickNewQuestion();
+      updateModeLabel();
+    }
+
+    function updateBoardUI() {
+      const cells = boardElement.querySelectorAll('.cell');
+      cells.forEach((cell, idx) => {
+        cell.textContent = board[idx] || '';
+        if (gameOver || !humanCanMove || board[idx] !== null) {
+          cell.classList.add('disabled');
+        } else {
+          cell.classList.remove('disabled');
+        }
+      });
+    }
+
+    function updateStatus(text) {
+      statusElement.innerHTML = text;
+    }
+
+    function updateScore() {
+      scoreElement.textContent = `Счёт — правильных ответов: ${correctAnswers} | ошибок: ${wrongAnswers}`;
+    }
+
+    function checkWinner() {
+      for (const line of winningLines) {
+        const first = board[line[0]];
+        if (!first) continue;
+        let allSame = true;
+        for (let i = 1; i < line.length; i++) {
+          if (board[line[i]] !== first) {
+            allSame = false;
+            break;
+          }
+        }
+        if (allSame) return first;
+      }
+      if (board.every(cell => cell !== null)) return "draw";
+      return null;
+    }
+
+    function finishGame() {
+      gameOver = true;
+      humanCanMove = false;
+      updateBoardUI();
+
+      solidBtn.disabled = true;
+      separateBtn.disabled = true;
+
+      updateStatus("Тренировка завершена! 👏");
+      updateScore();
+      const total = answeredUnique.length;
+      const all = QUESTIONS.length;
+      statusElement.innerHTML += `<br><span style="font-size:13px;opacity:0.9">Вы повторили ${total} из ${all} наречий.</span>`;
+
+      const totalAnswers = correctAnswers + wrongAnswers;
+      const accuracy = totalAnswers > 0
+        ? Math.round((correctAnswers / totalAnswers) * 100)
+        : 0;
+
+      quizResults.innerHTML =
+        `<strong>Итоги тренировки</strong><br>` +
+        `Правильных ответов: ${correctAnswers}<br>` +
+        `Ошибок: ${wrongAnswers}<br>` +
+        `Точность: ${accuracy}%`;
+      quizResults.style.display = 'block';
+
+      mistakesBtnRow.style.display = mistakes.length > 0 ? 'flex' : 'none';
+    }
+
+    function onCellClick(event) {
+      const idx = parseInt(event.currentTarget.dataset.index, 10);
+      if (!humanCanMove || gameOver || board[idx] !== null) return;
+
+      const mark = (gameMode === "vsComputer") ? "X" : currentPlayer;
+      board[idx] = mark;
+      updateBoardUI();
+
+      if (board.every(cell => cell !== null)) {
+        finishGame();
+        return;
+      }
+
+      humanCanMove = false;
+      updateBoardUI();
+
+      if (gameMode === "vsComputer") {
+        updateStatus("Ход компьютера…");
+        setTimeout(aiMove, 450);
+      } else {
+        currentPlayer = (currentPlayer === "X") ? "O" : "X";
+        updateStatus(`Теперь отвечает игрок ${currentPlayer}.`);
+        setTimeout(() => {
+          solidBtn.disabled = false;
+          separateBtn.disabled = false;
+          pickNewQuestion();
+        }, 400);
+      }
+    }
+
+    function aiMove() {
+      if (gameOver || gameMode !== "vsComputer") return;
+
+      const emptyIndices = board
+        .map((val, idx) => (val === null ? idx : null))
+        .filter(idx => idx !== null);
+      if (emptyIndices.length === 0) return;
+
+      function tryToComplete(mark) {
+        for (const line of winningLines) {
+          const vals = line.map(i => board[i]);
+          const marks = vals.filter(x => x === mark).length;
+          const empties = vals.filter(x => x === null).length;
+          if (marks === WIN_LENGTH - 1 && empties === 1) {
+            const emptyPos = vals.indexOf(null);
+            return line[emptyPos];
+          }
+        }
+        return null;
+      }
+
+      let moveIndex = tryToComplete("O");
+      if (moveIndex === null) moveIndex = tryToComplete("X");
+
+      const center = index(Math.floor(BOARD_SIZE / 2), Math.floor(BOARD_SIZE / 2));
+      if (moveIndex === null && board[center] === null) moveIndex = center;
+
+      if (moveIndex === null) {
+        const corners = [
+          index(0, 0),
+          index(0, BOARD_SIZE - 1),
+          index(BOARD_SIZE - 1, 0),
+          index(BOARD_SIZE - 1, BOARD_SIZE - 1)
+        ].filter(i => board[i] === null);
+        if (corners.length > 0) {
+          moveIndex = corners[Math.floor(Math.random() * corners.length)];
+        }
+      }
+
+      if (moveIndex === null) {
+        moveIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+      }
+
+      board[moveIndex] = "O";
+      updateBoardUI();
+
+      if (board.every(cell => cell !== null)) {
+        finishGame();
+        return;
+      }
+
+      humanCanMove = false;
+      updateBoardUI();
+      updateStatus("Теперь снова ответь на вопрос, чтобы получить право хода.");
+      solidBtn.disabled = false;
+      separateBtn.disabled = false;
+      pickNewQuestion();
+    }
+
+    function pickNewQuestion() {
+      if (usedQuestions.length === QUESTIONS.length) usedQuestions = [];
+      let idx;
+      do {
+        idx = Math.floor(Math.random() * QUESTIONS.length);
+      } while (usedQuestions.includes(idx));
+
+      usedQuestions.push(idx);
+      if (!answeredUnique.includes(idx)) answeredUnique.push(idx);
+
+      currentQuestionIndex = idx;
+      const q = QUESTIONS[idx];
+      adverbDisplay.textContent = q.display;
+      quizInfo.textContent = "";
+      quizInfo.className = "quiz-info";
+      solidBtn.disabled = false;
+      separateBtn.disabled = false;
+    }
+
+    function handleAnswer(answerType) {
+      if (currentQuestionIndex === null) return;
+      const q = QUESTIONS[currentQuestionIndex];
+      const isCorrect = q.type === answerType;
+
+      if (isCorrect) {
+        correctAnswers++;
+        quizInfo.innerHTML =
+          `<span class="correct">Верно!</span> «${q.base}» пишется <strong>${answerType === "solid" ? "слитно" : "раздельно"}</strong>.`;
+
+        humanCanMove = true;
+        if (gameMode === "vsComputer") {
+          updateStatus("Правильно! Теперь выбирай клетку для хода.");
+        } else {
+          updateStatus(`Правильно! Игрок ${currentPlayer}, выбирай клетку для хода.`);
+        }
+      } else {
+        wrongAnswers++;
+        mistakes.push({ base: q.base, display: q.display, correctType: q.type, userType: answerType });
+
+        solidBtn.disabled = true;
+        separateBtn.disabled = true;
+        humanCanMove = false;
+        updateScore();
+        updateBoardUI();
+
+        if (gameMode === "vsComputer") {
+          quizInfo.innerHTML =
+            `<span class="incorrect">Неверно.</span> Правильно: «${q.base}» — пишется <strong>${q.type === "solid" ? "слитно" : "раздельно"}</strong>. ` +
+            `Ты пропускаешь ход, теперь ходит компьютер.`;
+          updateStatus("Компьютер ходит, потому что ответ был неверным.");
+          setTimeout(aiMove, 2500);
+        } else {
+          const otherPlayer = (currentPlayer === "X") ? "O" : "X";
+          quizInfo.innerHTML =
+            `<span class="incorrect">Неверно.</span> Правильно: «${q.base}» — пишется <strong>${q.type === "solid" ? "слитно" : "раздельно"}</strong>. ` +
+            `Игрок ${currentPlayer} пропускает ход, теперь отвечает игрок ${otherPlayer}.`;
+          currentPlayer = otherPlayer;
+          setTimeout(() => {
+            updateStatus(`Теперь отвечает игрок ${currentPlayer}.`);
+            solidBtn.disabled = false;
+            separateBtn.disabled = false;
+            pickNewQuestion();
+          }, 2500);
+        }
+        return;
+      }
+
+      solidBtn.disabled = true;
+      separateBtn.disabled = true;
+      updateScore();
+      updateBoardUI();
+    }
+
+    solidBtn.addEventListener('click', () => handleAnswer("solid"));
+    separateBtn.addEventListener('click', () => handleAnswer("separate"));
+
+    newGameBtn.addEventListener('click', () => resetBoard());
+
+    modeToggleBtn.addEventListener('click', () => {
+      gameMode = (gameMode === "vsComputer") ? "twoPlayers" : "vsComputer";
+      resetBoard();
+    });
+
+    showMistakesBtn.addEventListener('click', () => {
+      if (quizMistakes.style.display === 'none' || quizMistakes.style.display === '') {
+        if (mistakes.length > 0) {
+          quizMistakes.innerHTML = mistakes
+            .map((m, i) =>
+              `<div>${i + 1}. «${m.base}» — правильно: <strong>${m.correctType === 'solid' ? 'слитно' : 'раздельно'}</strong>, ` +
+              `ваш ответ: <strong>${m.userType === 'solid' ? 'слитно' : 'раздельно'}</strong>.</div>`
+            )
+            .join('');
+        } else {
+          quizMistakes.innerHTML = '<div>Ошибок нет — блестящая работа! ✨</div>';
+        }
+        quizMistakes.style.display = 'block';
+        showMistakesBtn.textContent = 'Скрыть ошибки';
+      } else {
+        quizMistakes.style.display = 'none';
+        showMistakesBtn.textContent = 'Показать ошибки';
+      }
+    });
+
+    createBoard();
+
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    themeToggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-theme');
+      themeToggleBtn.textContent = document.body.classList.contains('light-theme')
+        ? 'Тёмная тема'
+        : 'Светлая тема';
+    });
+    updateScore();
+    runSelfTests();
+    resetBoard();
+  </script>
+</body>
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Новогодний Космический Доббль: ЛЖЕВВОДНЫЕ СЛОВА</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #000428, #004e92);
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-header {
+            text-align: center;
+            padding: 10px 0 6px 0;
+            width: 100%;
+            position: relative;
+            margin-bottom: 6px;
+        }
+
+        h1 {
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #0080ff;
+            margin: 5px 0;
+            font-size: 1.8em;
+        }
+
+        .subtitle {
+            color: #ff9ee5;
+            font-size: 1em;
+            margin: 0;
+        }
+
+        /* СЧЁТЧИК В ШАПКЕ (НЕ ПЕРЕКРЫВАЕТ ИГРУ) */
+        .stats-bar {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+            padding: 0 12px;
+            box-sizing: border-box;
+        }
+
+        .stats-overlay {
+            background: rgba(0, 30, 60, 0.9);
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #00aaff;
+            box-shadow: 0 0 10px #0088cc;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+            max-width: 95vw;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stat-row {
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+            white-space: nowrap;
+        }
+
+        .stat-label {
+            color: #aaddff;
+            font-size: 0.85em;
+            letter-spacing: 0.3px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.15em;
+            text-shadow: 0 0 5px currentColor;
+            min-width: 26px;
+            text-align: right;
+        }
+
+        .score-value { color: #00ffaa; }
+        .errors-value { color: #ff5555; }
+        .goal-value { color: #ffff00; }
+
+        .game-container {
+            position: relative;
+            margin: 0;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            /* чуть меньше, чтобы шапка + счетчик гарантированно влезали в модалку */
+            height: calc(100vh - 170px);
+            min-height: 380px;
+        }
+
+        canvas {
+            display: block;
+            border-radius: 10px;
+            box-shadow: 0 0 40px rgba(0, 200, 255, 0.5);
+            background-color: #0a0a2a;
+            cursor: pointer;
+
+            /* на случай узких окон/модалок */
+            max-width: 98vw;
+            max-height: 100%;
+        }
+
+        .instructions {
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #ff9ee5;
+            margin: 10px;
+            font-size: 0.85em;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .highlight {
+            color: #00ffff;
+            font-weight: bold;
+        }
+
+        .neon-text {
+            color: #ff9ee5;
+            text-shadow: 0 0 3px #ff9ee5;
+        }
+
+        @media (max-width: 900px) {
+            h1 { font-size: 1.4em; }
+            .stats-overlay { font-size: 0.85em; gap: 10px; }
+            .game-container { height: calc(100vh - 190px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1>✨ Новогодний Космический Доббль ✨</h1>
+        <div class="subtitle">ЛЖЕВВОДНЫЕ СЛОВА</div>
+
+        <!-- СЧЁТЧИК ТЕПЕРЬ В ШАПКЕ -->
+        <div class="stats-bar">
+            <div class="stats-overlay" aria-label="Статистика">
+                <div class="stat-row">
+                    <span class="stat-label">ПРАВИЛЬНЫЕ:</span>
+                    <span class="stat-value score-value" id="scoreDisplay">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">ОШИБКИ:</span>
+                    <span class="stat-value errors-value" id="errorsDisplay">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">ЦЕЛЬ:</span>
+                    <span class="stat-value goal-value" id="targetDisplay">51</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <canvas id="gameCanvas" width="1100" height="600"></canvas>
+    </div>
+
+    <div class="instructions">
+        <p><span class="highlight">🎯 Правила:</span> В каждой части космоса по 7 капсул. <span class="neon-text">Только одно слово совпадает в обеих частях!</span> Кликни на него, чтобы заработать очко. Капсулы всегда остаются на своих местах!</p>
+        <p><span class="neon-text">⚠️ Внимание!</span> Цвет капсул меняется случайно и не указывает на правильный ответ!</p>
+    </div>
+
+    <script>
+        // =================== КОНФИГУРАЦИЯ ИГРЫ ===================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const errorsDisplay = document.getElementById('errorsDisplay');
+        const targetDisplay = document.getElementById('targetDisplay');
+
+        const GOAL_SCORE = 51; // Теперь 51 слово
+        const WORDS_PER_SIDE = 7;
+        const UFO_RADIUS_X = 100;
+        const UFO_RADIUS_Y = 55;
+
+        // Полный список лжевводных слов (51 штука)
+        const ALL_LZHEVODNYE = [
+            "авось", "небось", "вдобавок", "обязательно", "как будто", "всё-таки", "как раз", "наверняка",
+            "и тем не менее", "едва ли", "даже", "вряд ли", "ведь", "якобы", "притом", "почти", "меж тем",
+            "в конечном счете", "в крайнем случае", "в итоге", "на всякий случай", "в связи с этим", "то есть",
+            "как минимум", "как максимум", "фактически", "при всём желании", "при всём при том", "практически",
+            "аналогично", "в результате", "в то же время", "по меньшей мере", "вдруг", "более или менее",
+            "тем более", "к тому же", "непременно", "вот", "именно", "иначе", "по возможности",
+            "примерно", "просто", "приблизительно", "решительно", "исключительно", "поистине"
+        ];
+
+        // =================== ФИНАЛЬНЫЕ ПОЗИЦИИ ===================
+        const LEFT_POSITIONS = [
+            {x: 150, y: 100}, {x: 130, y: 250}, {x: 160, y: 400}, {x: 140, y: 550},
+            {x: 420, y: 150}, {x: 440, y: 300}, {x: 410, y: 450}
+        ];
+
+        const RIGHT_POSITIONS = [
+            {x: 680, y: 150}, {x: 700, y: 300}, {x: 670, y: 450},
+            {x: 950, y: 100}, {x: 930, y: 250}, {x: 960, y: 400}, {x: 940, y: 550}
+        ];
+
+        // =================== СОСТОЯНИЕ ИГРЫ ===================
+        let gameState = {
+            score: 0,
+            errors: 0,
+            ufos: {
+                left: [],
+                right: []
+            },
+            usedWords: new Set(),
+            currentMatchWord: null,
+            hoveredUfo: null,
+            particles: []
+        };
+
+        // =================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===================
+        function random(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Генерация пар цветов для капсулы (основной и внутренний)
+        function getRandomColorPair() {
+            const baseHue = randomInt(0, 360);
+            const innerHue = (baseHue + randomInt(20, 40)) % 360;
+
+            return {
+                baseColor: `hsl(${baseHue}, ${randomInt(75, 90)}%, ${randomInt(50, 65)}%)`,
+                innerColor: `hsl(${innerHue}, ${randomInt(85, 95)}%, ${randomInt(65, 75)}%)`
+            };
+        }
+
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 8; i++) {
+                gameState.particles.push({
+                    x: x,
+                    y: y,
+                    vx: random(-2, 2),
+                    vy: random(-2, 2),
+                    radius: random(1, 4),
+                    color: color,
+                    life: 1.0
+                });
+            }
+        }
+
+        // =================== СОЗДАНИЕ НОВОГО РАУНДА ===================
+        function createNewRound() {
+            if (gameState.usedWords.size >= ALL_LZHEVODNYE.length) {
+                showVictory();
+                return;
+            }
+
+            // 1. Выбираем совпадающее слово
+            const availableForMatch = ALL_LZHEVODNYE.filter(w => !gameState.usedWords.has(w));
+            gameState.currentMatchWord = availableForMatch[randomInt(0, availableForMatch.length - 1)];
+            gameState.usedWords.add(gameState.currentMatchWord);
+
+            // 2. Создаем полный набор уникальных слов для обеих сторон
+            const allNeededWords = WORDS_PER_SIDE * 2 - 2; // 12 уникальных слов
+            const availableWords = ALL_LZHEVODNYE.filter(w => !gameState.usedWords.has(w));
+
+            // 3. Если слов недостаточно, очищаем использованные
+            if (availableWords.length < allNeededWords) {
+                const matchWord = gameState.currentMatchWord;
+                gameState.usedWords.clear();
+                gameState.usedWords.add(matchWord);
+                gameState.currentMatchWord = matchWord;
+                return createNewRound();
+            }
+
+            // 4. Выбираем уникальные слова для левой и правой стороны
+            const shuffled = [...availableWords].sort(() => Math.random() - 0.5);
+            const leftWords = shuffled.slice(0, WORDS_PER_SIDE - 1);
+            const rightWords = shuffled.slice(WORDS_PER_SIDE - 1, allNeededWords);
+
+            // 5. Добавляем совпадающее слово в обе стороны на случайные позиции
+            const leftMatchIndex = randomInt(0, WORDS_PER_SIDE - 1);
+            const rightMatchIndex = randomInt(0, WORDS_PER_SIDE - 1);
+
+            leftWords.splice(leftMatchIndex, 0, gameState.currentMatchWord);
+            rightWords.splice(rightMatchIndex, 0, gameState.currentMatchWord);
+
+            // 6. Добавляем все использованные слова в сет
+            leftWords.forEach(w => gameState.usedWords.add(w));
+            rightWords.forEach(w => gameState.usedWords.add(w));
+
+            // 7. Создаём капсулы для левой половины со СЛУЧАЙНЫМИ цветами
+            gameState.ufos.left = [];
+            for (let i = 0; i < WORDS_PER_SIDE; i++) {
+                const pos = LEFT_POSITIONS[i];
+                const colors = getRandomColorPair();
+
+                gameState.ufos.left.push({
+                    x: pos.x,
+                    y: pos.y,
+                    word: leftWords[i],
+                    baseColor: colors.baseColor,
+                    innerColor: colors.innerColor,
+                    isMatch: leftWords[i] === gameState.currentMatchWord,
+                    hover: false
+                });
+            }
+
+            // 8. Создаём капсулы для правой половины со СЛУЧАЙНЫМИ цветами
+            gameState.ufos.right = [];
+            for (let i = 0; i < WORDS_PER_SIDE; i++) {
+                const pos = RIGHT_POSITIONS[i];
+                const colors = getRandomColorPair();
+
+                gameState.ufos.right.push({
+                    x: pos.x,
+                    y: pos.y,
+                    word: rightWords[i],
+                    baseColor: colors.baseColor,
+                    innerColor: colors.innerColor,
+                    isMatch: rightWords[i] === gameState.currentMatchWord,
+                    hover: false
+                });
+            }
+
+            gameState.hoveredUfo = null;
+        }
+
+        function showVictory() {
+            setTimeout(() => {
+                alert(`🎉 КОСМИЧЕСКАЯ ПОБЕДА!\nВы нашли все 51 лжевводное слово!\nОшибок: ${gameState.errors}\n\nНачать заново?`);
+                resetGame();
+            }, 300);
+        }
+
+        function resetGame() {
+            gameState.score = 0;
+            gameState.errors = 0;
+            gameState.usedWords.clear();
+            scoreDisplay.textContent = '0';
+            errorsDisplay.textContent = '0';
+            createNewRound();
+            draw();
+        }
+
+        // =================== ОТРИСОВКА ===================
+        let stars = [];
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 120; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 1.5 + 0.5,
+                    brightness: Math.random() * 0.5 + 0.3
+                });
+            }
+        }
+
+        function drawBackground() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#0a0a2a');
+            gradient.addColorStop(0.5, '#1a1a40');
+            gradient.addColorStop(1, '#0a0a2a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (const star of stars) {
+                ctx.globalAlpha = star.brightness;
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+
+            // Разделительная линия
+            ctx.strokeStyle = 'rgba(0, 200, 255, 0.25)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawUfo(ufo) {
+            const hoverEffect = ufo.hover ? 1.08 : 1.0;
+            const currentX = ufo.x;
+            const currentY = ufo.y;
+
+            // Внешнее свечение
+            const glowRadius = UFO_RADIUS_X * (ufo.hover ? 1.4 : 1.1);
+            const glowGradient = ctx.createRadialGradient(
+                currentX, currentY, UFO_RADIUS_X * 0.5,
+                currentX, currentY, glowRadius
+            );
+            glowGradient.addColorStop(0, ufo.hover ? ufo.baseColor.replace(')', ', 0.7)') : ufo.baseColor.replace(')', ', 0.4)'));
+            glowGradient.addColorStop(1, 'transparent');
+
+            ctx.globalAlpha = 0.6;
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.ellipse(currentX, currentY, glowRadius, UFO_RADIUS_Y * 1.1, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            // Внешняя часть капсулы
+            const outerGradient = ctx.createLinearGradient(
+                currentX - UFO_RADIUS_X, currentY,
+                currentX + UFO_RADIUS_X, currentY
+            );
+            outerGradient.addColorStop(0, ufo.baseColor);
+            outerGradient.addColorStop(1, ufo.baseColor.replace('%)', '%, 0.7)'));
+
+            ctx.fillStyle = outerGradient;
+            ctx.beginPath();
+            ctx.ellipse(currentX, currentY,
+                       UFO_RADIUS_X * hoverEffect,
+                       UFO_RADIUS_Y * hoverEffect,
+                       0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Внутренняя часть капсулы
+            const innerRadiusX = UFO_RADIUS_X * 0.7;
+            const innerRadiusY = UFO_RADIUS_Y * 0.7;
+
+            const innerGradient = ctx.createRadialGradient(
+                currentX - innerRadiusX * 0.3, currentY - innerRadiusY * 0.3, 0,
+                currentX, currentY, innerRadiusX
+            );
+            innerGradient.addColorStop(0, ufo.innerColor);
+            innerGradient.addColorStop(1, ufo.baseColor.replace('%)', '%, 0.5)'));
+
+            ctx.fillStyle = innerGradient;
+            ctx.beginPath();
+            ctx.ellipse(currentX, currentY, innerRadiusX, innerRadiusY, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Обводка
+            ctx.strokeStyle = ufo.hover ? '#ffffff' : '#d0d0ff';
+            ctx.lineWidth = ufo.hover ? 2.5 : 1.5;
+            ctx.beginPath();
+            ctx.ellipse(currentX, currentY,
+                       UFO_RADIUS_X * hoverEffect,
+                       UFO_RADIUS_Y * hoverEffect,
+                       0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Текст
+            ctx.fillStyle = '#001a33';
+            ctx.font = ufo.hover ? 'bold 24px Arial' : 'bold 22.5px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const words = ufo.word.split(' ');
+            if (words.length > 1 || ufo.word.length > 12) {
+                if (words.length > 1) {
+                    const firstPart = words.slice(0, Math.ceil(words.length/2)).join(' ');
+                    const secondPart = words.slice(Math.ceil(words.length/2)).join(' ');
+                    ctx.fillText(firstPart, currentX, currentY - 10);
+                    ctx.fillText(secondPart, currentX, currentY + 10);
+                } else {
+                    const mid = Math.floor(ufo.word.length / 2);
+                    ctx.fillText(ufo.word.substring(0, mid), currentX, currentY - 10);
+                    ctx.fillText(ufo.word.substring(mid), currentX, currentY + 10);
+                }
+            } else {
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.strokeText(ufo.word, currentX, currentY);
+                ctx.lineWidth = 1;
+                ctx.fillText(ufo.word, currentX, currentY);
+            }
+        }
+
+        function drawParticles() {
+            for (let i = gameState.particles.length - 1; i >= 0; i--) {
+                const p = gameState.particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.04;
+
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (p.life <= 0) {
+                    gameState.particles.splice(i, 1);
+                }
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function draw() {
+            drawBackground();
+            drawParticles();
+            [...gameState.ufos.left, ...gameState.ufos.right].forEach(ufo => drawUfo(ufo));
+        }
+
+        // =================== ИГРОВАЯ ЛОГИКА ===================
+        function checkUfoHover(mouseX, mouseY) {
+            let hasHover = false;
+            const allUfos = [...gameState.ufos.left, ...gameState.ufos.right];
+
+            for (const ufo of allUfos) {
+                const dx = mouseX - ufo.x;
+                const dy = mouseY - ufo.y;
+                const normalized = (dx * dx) / (UFO_RADIUS_X * UFO_RADIUS_X) +
+                                   (dy * dy) / (UFO_RADIUS_Y * UFO_RADIUS_Y);
+
+                const wasHovering = ufo.hover;
+                ufo.hover = normalized <= 1;
+
+                if (ufo.hover !== wasHovering) hasHover = true;
+            }
+
+            if (hasHover) draw();
+        }
+
+        canvas.addEventListener('mousemove', function(event) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+            checkUfoHover(mouseX, mouseY);
+        });
+
+        canvas.addEventListener('click', function(event) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            const allUfos = [...gameState.ufos.left, ...gameState.ufos.right];
+            for (const ufo of allUfos) {
+                const dx = mouseX - ufo.x;
+                const dy = mouseY - ufo.y;
+                const normalized = (dx * dx) / (UFO_RADIUS_X * UFO_RADIUS_X) +
+                                   (dy * dy) / (UFO_RADIUS_Y * UFO_RADIUS_Y);
+
+                if (normalized <= 1) {
+                    if (ufo.word === gameState.currentMatchWord) {
+                        gameState.score++;
+                        scoreDisplay.textContent = gameState.score;
+                        createParticles(ufo.x, ufo.y, '#00ffaa');
+
+                        if (gameState.score >= GOAL_SCORE) {
+                            showVictory();
+                        } else {
+                            setTimeout(() => {
+                                createNewRound();
+                                draw();
+                            }, 300);
+                        }
+                    } else {
+                        gameState.errors++;
+                        errorsDisplay.textContent = gameState.errors;
+                        createParticles(ufo.x, ufo.y, '#ff5555');
+                    }
+
+                    draw();
+                    break;
+                }
+            }
+        });
+
+        // =================== ЗАПУСК ===================
+        function gameLoop() {
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        initStars();
+        createNewRound();
+        gameLoop();
+    </script>
+</body>
+</html>

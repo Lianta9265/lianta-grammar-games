@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Грамматические игры | Галерея</title>
+  <meta name="description" content="Галерея игр для изучения русской грамматики">
+  <style>
+    :root{
+      --primary-color:#4a6fa5;
+      --secondary-color:#166088;
+      --accent-color:#4fc3a1;
+      --background-color:#f5f7fa;
+      --card-color:#ffffff;
+      --text-color:#333333;
+      --text-light:#666666;
+      --shadow:0 4px 12px rgba(0,0,0,.1);
+      --radius:12px;
+      --transition:all .3s ease;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+      line-height:1.6;
+      color:var(--text-color);
+      background-color:var(--background-color);
+      padding-bottom:40px;
+    }
+    header{
+      background:linear-gradient(135deg,var(--primary-color),var(--secondary-color));
+      color:#fff;
+      padding:2rem 1.5rem;
+      text-align:center;
+      margin-bottom:2rem;
+      box-shadow:var(--shadow);
+    }
+    h1{font-size:2.5rem;margin-bottom:.5rem}
+    .subtitle{font-size:1.1rem;opacity:.9;max-width:800px;margin:0 auto}
+
+    .section{margin:3rem 0;padding:0 1.5rem}
+    .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+    .section-title{font-size:1.8rem;color:var(--secondary-color)}
+
+    .carousel-container{position:relative;margin:0}
+    .carousel{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:1.6rem;
+      padding:1rem 2rem;
+      justify-items:center;
+    }
+    .carousel-item{width:100%}
+
+    .game-card{
+      background-color:var(--card-color);
+      border-radius:var(--radius);
+      overflow:hidden;
+      box-shadow:0 0 12px rgba(79,195,161,.3);
+      transition:var(--transition);
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      cursor:pointer;
+      border:2px solid transparent;
+      background-clip:padding-box;
+      position:relative;
+      outline:none;
+    }
+    .game-card::before{
+      content:"";
+      position:absolute;inset:0;
+      border-radius:var(--radius);
+      padding:2px;
+      background:linear-gradient(135deg,#00f2ff,#7a30ff,#ff00c8);
+      -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+      -webkit-mask-composite:xor;
+      mask-composite:exclude;
+      pointer-events:none;
+    }
+    .game-card:hover,.game-card:focus-within{
+      transform:translateY(-8px) scale(1.02);
+      box-shadow:0 0 20px 6px rgba(255,0,213,.45),0 0 35px 12px rgba(0,255,255,.25);
+    }
+    .game-card:hover::before{filter:brightness(1.4) saturate(1.5)}
+
+    .game-preview{
+      height:180px;
+      overflow:hidden;
+      background-color:#0a0f1a;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .game-preview img{width:100%;height:100%;object-fit:cover;transition:var(--transition)}
+    .game-card:hover .game-preview img{transform:scale(1.05)}
+
+    .game-info{padding:1.5rem;flex-grow:1;display:flex;flex-direction:column}
+    .game-title{font-size:1.3rem;font-weight:700;margin-bottom:.8rem;color:var(--secondary-color)}
+    .game-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:auto}
+    .tag{
+      background:radial-gradient(circle at 0 0,#d7f9ff,#e9f0f7);
+      color:var(--primary-color);
+      padding:.3rem .8rem;border-radius:20px;
+      font-size:.85rem;font-weight:500;
+      box-shadow:0 0 6px rgba(0,242,255,.4);
+    }
+
+    /* ===== MODAL / DIALOG ===== */
+    dialog{
+      border:none;
+      border-radius:var(--radius);
+      padding:0;
+      width:min(98vw,1400px);
+      height:92vh;
+      max-width:none;
+      box-shadow:0 10px 40px rgba(0,0,0,.2);
+      background-color:#fff;
+      animation:modalFadeIn .3s ease;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    dialog.is-wide{width:98vw;height:98vh}
+
+    /* Когда включен настоящий fullscreen — убираем скругления (чтобы было "как приложение") */
+    dialog.is-fs{
+      width:100vw;
+      height:100vh;
+      border-radius:0;
+    }
+
+    @keyframes modalFadeIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+
+    .modal-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:1.1rem 1.1rem;
+      border-bottom:1px solid #eee;
+      gap:1rem;
+    }
+    .modal-title{
+      font-size:1.35rem;
+      color:var(--secondary-color);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      flex:1;
+      min-width:0;
+    }
+    .modal-actions{display:flex;gap:.4rem;align-items:center}
+
+    .close-btn{
+      background:none;border:none;
+      font-size:1.6rem;
+      cursor:pointer;
+      color:var(--text-light);
+      width:40px;height:40px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      transition:var(--transition);
+      -webkit-tap-highlight-color:transparent;
+    }
+    .close-btn:hover,.close-btn:focus{background-color:#f0f0f0;color:var(--secondary-color)}
+
+    /* Кнопка настоящего Fullscreen — показываем только на телефонах */
+    .fs-phone-btn{display:none}
+
+    .game-frame-container{
+      width:100%;
+      flex:1;
+      min-height:0;
+      position:relative;
+      background-color:#f9f9f9;
+    }
+    .game-frame{width:100%;height:100%;border:none;display:block}
+    .game-frame-loading{
+      position:absolute;inset:0;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      background-color:#f9f9f9;
+      color:var(--text-light);
+      font-size:1.1rem;
+    }
+    .spinner{
+      width:50px;height:50px;
+      border:5px solid #e0e5ec;
+      border-top-color:var(--primary-color);
+      border-radius:50%;
+      animation:spin 1s linear infinite;
+      margin-bottom:1rem;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    dialog::backdrop{background-color:rgba(0,0,0,.7);backdrop-filter:blur(2px)}
+
+    .instructions{
+      max-width:800px;margin:3rem auto;padding:2rem;
+      background-color:#fff;border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .instructions h2{color:var(--secondary-color);margin-bottom:1rem}
+    .instructions p{margin-bottom:1rem;color:var(--text-light)}
+    .instructions code{
+      background-color:#f0f5ff;padding:.2rem .5rem;border-radius:4px;
+      font-family:'Courier New',monospace;color:var(--primary-color)
+    }
+
+    footer{
+      text-align:center;margin-top:3rem;padding-top:2rem;
+      border-top:1px solid #e0e5ec;color:var(--text-light)
+    }
+
+    /* Адаптив */
+    @media (max-width:1200px){
+      .carousel{grid-template-columns:repeat(3,1fr)}
+    }
+    @media (max-width:768px){
+      h1{font-size:2rem}
+      .section-title{font-size:1.5rem}
+      .carousel{grid-template-columns:repeat(2,1fr);padding:1rem;gap:1.2rem}
+
+      dialog{width:98vw;height:95vh}
+      dialog.is-wide{width:100vw;height:100vh;border-radius:0}
+
+      /* На телефонах показываем "настоящий fullscreen" */
+      .fs-phone-btn{display:flex}
+      .modal-title{font-size:1.1rem}
+    }
+    @media (max-width:480px){
+      .section{padding:0 1rem}
+      .carousel{grid-template-columns:1fr;padding:.5rem 1rem}
+      .game-preview{height:140px}
+      .game-info{padding:1rem}
+      .modal-header{padding:.8rem .8rem}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Грамматические игры</h1>
+  <p class="subtitle">Изучайте русскую грамматику в игровой форме. Нажмите на игру, чтобы запустить её.</p>
+</header>
+
+<main>
+  <section class="section" id="games">
+    <div class="section-header">
+      <h2 class="section-title">Игры по русской грамматике</h2>
+    </div>
+    <div class="carousel-container">
+      <div class="carousel games-carousel" id="carousel-games">
+        <!-- Карточки будут сгенерированы JavaScript -->
+      </div>
+    </div>
+  </section>
+
+  <section class="instructions">
+    <h2>Как добавить свои игры</h2>
+    <p>Чтобы добавить свои игры в галерею, отредактируйте массив <code>gamesData</code> в разделе JavaScript этого файла.</p>
+    <p>Каждая игра должна иметь следующие поля:</p>
+    <ul>
+      <li><code>id</code> — уникальный идентификатор</li>
+      <li><code>title</code> — название игры</li>
+      <li><code>preview</code> — URL изображения превью</li>
+      <li><code>url</code> — URL игры для загрузки в iframe</li>
+      <li><code>tags</code> — массив тегов (строки)</li>
+    </ul>
+  </section>
+
+  <dialog id="gameModal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">Загрузка игры...</h3>
+
+      <div class="modal-actions">
+        <!-- Настоящий Fullscreen — на телефонах -->
+        <button class="close-btn fs-phone-btn" id="phoneFullscreen"
+                aria-label="Полный экран (телефон)"
+                title="Полный экран (телефон)"
+                onclick="toggleTrueFullscreen()">📱</button>
+
+        <!-- Почти на весь экран (на всех устройствах) -->
+        <button class="close-btn" id="toggleWide"
+                aria-label="Почти на весь экран"
+                title="Почти на весь экран"
+                onclick="toggleWide()">⛶</button>
+
+        <button class="close-btn" id="closeModal"
+                aria-label="Закрыть окно"
+                onclick="closeModal()">&times;</button>
+      </div>
+    </div>
+
+    <div class="game-frame-container">
+      <div class="game-frame-loading" id="loadingIndicator">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Загрузка игры...</p>
+      </div>
+      <iframe class="game-frame" id="gameFrame" title="Игровой контент" allow="gamepad; fullscreen"></iframe>
+    </div>
+  </dialog>
+</main>
+
+<footer>
+  <p>Грамматические игры &copy; 2023 | Esc — закрыть окно</p>
+</footer>
+
+<script>
+  const gamesData = [
+    { id: 1, title: "СУФФИКСЫ-ПЯТНАШКИ", preview: "https://i.postimg.cc/fSjRB7XP/1.png", url: "suff-pyatnashki.html", tags: ["Грамматика","Пазл","Обучение","Причастия","Пятнашки"] },
+    { id: 2, title: "СУФФИКСЫ ПРИЧАСТИЙ", preview: "https://i.postimg.cc/7JMZm10Y/2.png", url: "suff-prichastiy.html", tags: ["Лабиринт","Грамматика","Причастия","Суффиксы"] },
+    { id: 3, title: "РАЗРЯДЫ ПРИЧАСТИЙ", preview: "https://i.postimg.cc/ZRfYwc3J/jungle.png", url: "razryady-prichastiy.html", tags: ["Причастия","Разряды","Фрукты","Игра"] },
+    { id: 4, title: "КРЕСТИКИ-НОЛИКИ: НАРЕЧИЯ", preview: "https://i.postimg.cc/vxGVdy87/izobrazenie(4).png", url: "narechia-krestiky-noliky.html", tags: ["Наречия","Слитно/раздельно","Крестики-нолики","7x7","Тренажёр"] },
+    { id: 5, title: "НАРЕЧИЯ — НЕОНОВЫЙ ТРЕНАЖЁР", preview: "https://i.postimg.cc/BPJKG3Zw/izobrazenie(5).png", url: "narech-krest-nol-neon.html", tags: ["Наречия","Слитно/раздельно","Крестики-нолики","Неон","Тренажёр"] },
+    { id: 6, title: "СУФФИКСЫ ПРИЛАГАТЕЛЬНЫХ", preview: "https://i.postimg.cc/PqqxX9Xk/izobrazenie(6).png", url: "adjective-suffixes.html", tags: ["Прилагательные","Суффиксы","Словообразование"] },
+    { id: 7, title: "ФО / ОБЗ — ОГЭ", preview: "https://i.postimg.cc/9zx6JxvG/izobrazenie(8).png", url: "fo-obz-oge.html", tags: ["Орфография","ФО/ОБЗ","ОГЭ","Аудирование"] },
+    { id: 8, title: "ТИПЫ СЛОВОСОЧЕТАНИЙ", preview: "https://i.postimg.cc/V5Ly9yHX/izobrazenie(7).png", url: "slovosochetaniya.html", tags: ["Синтаксис","Словосочетания","Согласование","Управление","Примыкание"] },
+    { id: 9, title: "НАРЕЧИЯ: СЛИТНО / РАЗДЕЛЬНО", preview: "https://i.postimg.cc/hJ5mCR1G/izobrazenie(9).png", url: "narech-slitno-razd.html", tags: ["Наречия","Правописание","Орфография","Тренажёр"] },
+    { id: 10, title: "ПРОИЗВОДНЫЕ ПРЕДЛОГИ (лягушки)", preview: "https://i.postimg.cc/J4Sf5C3j/1091e32f-gemini.jpg", url: "proizvodnyje-predlogi.html", tags: ["Предлоги","Производные","ЕГЭ","Лягушки"] },
+    { id: 11, title: "КОСМИЧЕСКАЯ МИССИЯ (омонимия)", preview: "https://i.postimg.cc/7YTFv4F9/Black-Grey-Illustrated-Moon-Space-Astronaut-Desktop-Wallpaper-(2).png", url: "cosmich-omofon.html", tags: ["Предлоги","Омонимия","Космос","Лягушка"] },
+    { id: 12, title: "МЕРЦАЮЩИЙ КОСМОС: ВВОДНЫЕ И ЛЖЕВВОДНЫЕ", preview: "https://r2.syntx.ai/banana/2025/12/10/45ca484f_nano_2K.png", url: "vvodnyie-lgevvodnyie.html", tags: ["Вводные слова","Лжевводные","Космос","Тренажёр"] },
+    { id: 13, title: "СКЛОНЕНИЕ ЧИСЛИТЕЛЬНЫХ", preview: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%221200%22%20height%3D%22600%22%20viewBox%3D%220%200%201200%20600%22%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22%2306122b%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22260%22%20text-anchor%3D%22middle%22%20font-size%3D%2292%22%20font-family%3D%22Segoe%20UI%20Emoji%2C%20Apple%20Color%20Emoji%2C%20Noto%20Color%20Emoji%22%3E%E2%9D%84%EF%B8%8F%20%F0%9F%94%A2%20%F0%9F%AA%90%20%E2%9C%A8%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22360%22%20text-anchor%3D%22middle%22%20font-size%3D%2238%22%20font-family%3D%22Segoe%20UI%2C%20Arial%22%20fill%3D%22%23e8f3ff%22%3E%D0%A7%D0%B8%D1%81%D0%BB%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D1%8B%D0%B5%3C/text%3E%3C/svg%3E", url: "chislit-sklonen.html", tags: ["Числительные","Склонение","Тренажёр","ЕГЭ"] },
+    { id: 14, title: "КОСМИЧЕСКИЙ ДОББЛЬ: ЛЖЕВВОДНЫЕ — СВЯЗИ (CANVA)", preview: "нло.png", url: "lgevvodn-sviazi-canva.html", tags: ["Вводные","Лжевводные","Космос","Доббль","Canva"] },
+        {
+            id: 17,
+            title: "КОСМИЧЕСКИЙ ДОББЛЬ: ЛЖЕВВОДНЫЕ (тёмный)",
+            preview: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%221200%22%20height%3D%22600%22%20viewBox%3D%220%200%201200%20600%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%230a0c2c%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231a1a2e%22/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22glow%22%20x%3D%22-50%25%22%20y%3D%22-50%25%22%20width%3D%22200%25%22%20height%3D%22200%25%22%3E%0A%20%20%20%20%20%20%3CfeGaussianBlur%20stdDeviation%3D%226%22%20result%3D%22b%22/%3E%0A%20%20%20%20%20%20%3CfeMerge%3E%3CfeMergeNode%20in%3D%22b%22/%3E%3CfeMergeNode%20in%3D%22SourceGraphic%22/%3E%3C/feMerge%3E%0A%20%20%20%20%3C/filter%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%0A%20%20%3Ctext%20x%3D%22600%22%20y%3D%22165%22%20text-anchor%3D%22middle%22%20font-size%3D%2292%22%20font-family%3D%22Segoe%20UI%20Emoji%2C%20Apple%20Color%20Emoji%2C%20Noto%20Color%20Emoji%22%20filter%3D%22url%28%23glow%29%22%3E%F0%9F%8C%8C%20%F0%9F%9B%B8%EF%B8%8F%20%E2%9C%A8%3C/text%3E%0A%20%20%3Ctext%20x%3D%22600%22%20y%3D%22315%22%20text-anchor%3D%22middle%22%20font-size%3D%2242%22%20font-family%3D%22Segoe%20UI%2C%20Arial%22%20fill%3D%22%23e8f3ff%22%20opacity%3D%220.92%22%20filter%3D%22url%28%23glow%29%22%3E%D0%9B%D0%B6%D0%B5%D0%B2%D0%B2%D0%BE%D0%B4%D0%BD%D1%8B%D0%B5%3C/text%3E%0A%20%20%3Ctext%20x%3D%22600%22%20y%3D%22385%22%20text-anchor%3D%22middle%22%20font-size%3D%2228%22%20font-family%3D%22Segoe%20UI%2C%20Arial%22%20fill%3D%22%23a0d8ff%22%20opacity%3D%220.85%22%3E%D0%BA%D0%BE%D1%81%D0%BC%D0%BE%D1%81%20%E2%80%A2%20%D1%82%D1%91%D0%BC%D0%BD%D1%8B%D0%B9%20%D1%80%D0%B5%D0%B6%D0%B8%D0%BC%3C/text%3E%0A%3C/svg%3E",
+            url: "lgevvodn-sviazi.html",
+            tags: ["Вводные","Лжевводные","Космос","Тёмный экран","Доббль"]
+        },
+
+    
+    { id: 18, title: "СЛОВОПАД", preview: "https://r2.syntx.ai/banana/2025/12/22/cdb525d5_nano_2K.png", url: "slovopad.html", tags: ["Части речи","Словопад","7 класс","Тренажёр"] },
+
+    { id: 19, title: "СЛОВОПАД — таймер", preview: "https://i.postimg.cc/pT8sddMW/oblozka.jpg", url: "slovopad-timer.html", tags: ["Части речи","Словопад","Таймер","Тренажёр"] },
+{ id: 15, title: "КОСМИЧЕСКИЙ ДОББЛЬ: УВЕРЕННОСТЬ", preview: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%221200%22%20height%3D%22600%22%20viewBox%3D%220%200%201200%20600%22%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22%2306122b%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22260%22%20text-anchor%3D%22middle%22%20font-size%3D%2292%22%20font-family%3D%22Segoe%20UI%20Emoji%2C%20Apple%20Color%20Emoji%2C%20Noto%20Color%20Emoji%22%3E%F0%9F%9A%80%20%F0%9F%A7%A0%20%E2%9C%A8%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22360%22%20text-anchor%3D%22middle%22%20font-size%3D%2238%22%20font-family%3D%22Segoe%20UI%2C%20Arial%22%20fill%3D%22%23e8f3ff%22%3E%D0%A3%D0%B2%D0%B5%D1%80%D0%B5%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D1%8C%3C/text%3E%3C/svg%3E", url: "lgevvodn-uveren-ght.html", tags: ["Вводные","Космос","Уверенность","Доббль"] },
+    { id: 16, title: "КОСМИЧЕСКИЙ ДОББЛЬ: ОБЩИЕ (DEEP)", preview: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%221200%22%20height%3D%22600%22%20viewBox%3D%220%200%201200%20600%22%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22%2306122b%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22260%22%20text-anchor%3D%22middle%22%20font-size%3D%2292%22%20font-family%3D%22Segoe%20UI%20Emoji%2C%20Apple%20Color%20Emoji%2C%20Noto%20Color%20Emoji%22%3E%F0%9F%8C%80%20%F0%9F%9B%B0%EF%B8%8F%20%E2%9C%A8%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22360%22%20text-anchor%3D%22middle%22%20font-size%3D%2238%22%20font-family%3D%22Segoe%20UI%2C%20Arial%22%20fill%3D%22%23e8f3ff%22%3E%D0%9E%D0%B1%D1%89%D0%B8%D0%B5%20%28DEEP%29%3C/text%3E%3C/svg%3E", url: "lgevvodny-obshi-deep.html", tags: ["Вводные","Космос","Доббль","Deep"] }
+  ];
+
+  const gameModal = document.getElementById('gameModal');
+  const gameFrame = document.getElementById('gameFrame');
+  const modalTitle = document.getElementById('modalTitle');
+  const loadingIndicator = document.getElementById('loadingIndicator');
+  const carousel = document.getElementById('carousel-games');
+
+  document.addEventListener('DOMContentLoaded', () => {
+    gamesData.forEach(game => createGameCard(game, carousel));
+
+    gameModal.addEventListener('click', (event) => {
+      if (event.target === gameModal) closeModal();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && gameModal.open) closeModal();
+    });
+
+    // Слежение за выходом из fullscreen (кнопка "назад" на телефоне и т.п.)
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        gameModal.classList.remove('is-fs');
+      }
+    });
+  });
+
+  function createGameCard(game, container) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'carousel-item';
+
+    wrapper.innerHTML = `
+      <article class="game-card"
+        tabindex="0"
+        role="button"
+        aria-label="Запустить игру: ${escapeHtml(game.title)}"
+        data-url="${escapeAttr(game.url)}"
+        data-title="${escapeAttr(game.title)}">
+        <div class="game-preview">
+          <img src="${escapeAttr(game.preview)}" alt="Превью игры ${escapeHtml(game.title)}" loading="lazy">
+        </div>
+        <div class="game-info">
+          <h3 class="game-title">${escapeHtml(game.title)}</h3>
+          <div class="game-tags">
+            ${game.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+          </div>
+        </div>
+      </article>
+    `;
+
+    const card = wrapper.querySelector('.game-card');
+    card.addEventListener('click', () => openModal(card.dataset.url, card.dataset.title));
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') openModal(card.dataset.url, card.dataset.title);
+    });
+
+    container.appendChild(wrapper);
+  }
+
+  function openModal(gameUrl, gameTitle) {
+    if (!gameUrl) {
+      alert('У игры не указан URL.');
+      return;
+    }
+
+    modalTitle.textContent = gameTitle || 'Игра';
+    gameModal.showModal();
+
+    // По умолчанию — широко (почти весь экран)
+    gameModal.classList.add('is-wide');
+
+    loadingIndicator.style.display = 'flex';
+    gameFrame.style.display = 'none';
+
+    // Сброс обработчика (на случай повтора)
+    gameFrame.onload = null;
+
+    setTimeout(() => {
+      gameFrame.src = gameUrl;
+
+      gameFrame.onload = () => {
+        loadingIndicator.style.display = 'none';
+        gameFrame.style.display = 'block';
+      };
+    }, 120);
+  }
+
+  function toggleWide() {
+    gameModal.classList.toggle('is-wide');
+  }
+
+  // "ВАУ": настоящий fullscreen, но только по жесту пользователя (кнопка 📱).
+  async function toggleTrueFullscreen() {
+    try {
+      // 1) Если уже fullscreen — выходим
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        gameModal.classList.remove('is-fs');
+        return;
+      }
+
+      // 2) Пытаемся в fullscreen именно iframe (лучший эффект: без рамок)
+      // На некоторых браузерах (особенно iOS) fullscreen для iframe может быть ограничен.
+      const target = gameFrame || gameModal;
+
+      if (target.requestFullscreen) {
+        await target.requestFullscreen({ navigationUI: "hide" });
+        // делаем диалог "как приложение" на фоне fullscreen
+        gameModal.classList.add('is-fs');
+      } else {
+        // запасной вариант: делаем модалку 100vw/100vh
+        gameModal.classList.add('is-fs');
+        gameModal.classList.add('is-wide');
+        alert('Ваш браузер не поддерживает настоящий fullscreen. Включила максимально возможный режим.');
+      }
+    } catch (e) {
+      // Если браузер запретил — оставим максимально возможный режим
+      gameModal.classList.add('is-fs');
+      gameModal.classList.add('is-wide');
+      // Без страшных ошибок для ученика
+      console.warn('Fullscreen не включился:', e);
+    }
+  }
+
+  function closeModal() {
+    // если был fullscreen — выйдем
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(()=>{});
+    }
+
+    if (gameModal && gameModal.close) gameModal.close();
+    gameModal.classList.remove('is-wide','is-fs');
+
+    if (gameFrame) {
+      gameFrame.src = '';
+      gameFrame.style.display = 'none';
+    }
+    if (loadingIndicator) {
+      loadingIndicator.style.display = 'flex';
+      loadingIndicator.innerHTML = `
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Загрузка игры...</p>
+      `;
+    }
+  }
+
+  // Минимальная защита от спецсимволов в title/tags
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'","&#39;");
+  }
+  function escapeAttr(str) {
+    return escapeHtml(str).replaceAll('`','&#96;');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>СУФФИКСЫ ПРИЧАСТИЙ</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #75c3f0;
+      color: #60e388;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 3.4rem;
+      margin-bottom: 12px;
+      text-align: center;
+      color: #ffffff;
+      text-shadow: 0 0 10px #06b6d466;
+    }
+
+    .ui-bar {
+      background-color: #1b4b59;
+      padding: 12px 20px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    .stats {
+      display: flex;
+      gap: 24px;
+    }
+
+    .stat-item {
+      font-size: 1rem;
+    }
+
+    .keys-display {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .keys-display span {
+      margin-right: 8px;
+      font-weight: 500;
+    }
+
+    .key-icon {
+      width: 12px;
+      height: 12px;
+      background-color: #fbbf24;
+      border-radius: 50%;
+      opacity: 0.3;
+    }
+
+    .key-icon.active {
+      opacity: 1;
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      aspect-ratio: 1/1;
+    }
+
+    canvas {
+      background-color: #0f172a;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .controls {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+    }
+
+    button {
+       background: linear-gradient(90deg, #126f7e, #38bdf8, #10b981);
+      color: #ffffff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background-color: #475569;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      z-index: 10;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background-color: #1e293b;
+      color: #e2e8f0;
+      padding: 24px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(6, 182, 212, 0.2);
+    }
+
+    .modal h2 {
+      margin-bottom: 16px;
+      color: #94a3b8;
+    }
+
+    .question-text {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      color: #f1f5f9;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      background-color: #334155;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .option-btn:hover {
+      background-color: #475569;
+    }
+
+    .close-btn {
+      margin-top: 16px;
+      background-color: #06b6d4;
+      color: #0f172a;
+      font-weight: bold;
+    }
+
+    .win-message {
+      font-size: 1.4rem;
+      margin: 16px 0;
+      color: #10b981;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+  </style>
+</head>
+<body>
+  <h1>СУФФИКСЫ ПРИЧАСТИЙ</h1>
+
+  <div class="ui-bar">
+    <div class="stats">
+      <div class="stat-item">⏱ <span id="timer">00:00.0</span></div>
+      <div class="stat-item">👣 <span id="steps">0</span></div>
+    </div>
+    <div class="keys-display">
+      <span>Keys:</span>
+      <!-- 10 key icons -->
+      <div class="key-icon" id="key-0"></div>
+      <div class="key-icon" id="key-1"></div>
+      <div class="key-icon" id="key-2"></div>
+      <div class="key-icon" id="key-3"></div>
+      <div class="key-icon" id="key-4"></div>
+      <div class="key-icon" id="key-5"></div>
+      <div class="key-icon" id="key-6"></div>
+      <div class="key-icon" id="key-7"></div>
+      <div class="key-icon" id="key-8"></div>
+      <div class="key-icon" id="key-9"></div>
+    </div>
+  </div>
+
+  <div class="canvas-container">
+    <canvas id="mazeCanvas"></canvas>
+  </div>
+
+  <div class="controls">
+    <button id="newMazeBtn">New Maze</button>
+    <button id="replayBtn">Replay</button>
+  </div>
+
+  <!-- Modal: Question -->
+  <div class="modal" id="questionModal">
+    <div class="modal-content">
+      <h2>🔑 Объясни гласную в суффиксе причастия!</h2>
+      <div class="question-text" id="questionText"></div>
+      <div class="options" id="optionsContainer">
+        <!-- Buttons inserted by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Win -->
+  <div class="modal" id="winModal">
+    <div class="modal-content">
+      <h2>🎉 Победа!</h2>
+      <p class="win-message">⭐ Perfect route!</p>
+      <p>Время: <span id="finalTime"></span></p>
+      <p>Шагов: <span id="finalSteps"></span></p>
+      <button class="close-btn" id="winCloseBtn">Хорошо!</button>
+    </div>
+  </div>
+
+  <script>
+    // === CONFIG ===
+    const MAZE_SIZE = 35;
+    const CELL_SIZE = 12; // adjusted for canvas to fit
+    const WALL_SIZE = 2;
+    const PLAYER_COLOR = '#06b6d4';
+    const EXIT_COLOR = '#10b981';
+    const KEY_COLOR = '#fbbf24';
+    const ENEMY_COLOR = '#ef4444';
+    const PATH_COLOR = '#334155';
+    const WALL_COLOR = '#0f172a';
+
+    // === STATE ===
+    let maze = [];
+    let player = { x: 1, y: 1 }; // start in top-left open cell
+    let keys = [];
+    let collectedKeys = Array(10).fill(false);
+    let exit = null;
+    let enemies = [];
+    let allKeysCollected = false;
+    let steps = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let animationId = null;
+
+    const canvas = document.getElementById('mazeCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Resize canvas to fit container
+    function resizeCanvas() {
+      const size = Math.min(canvas.parentElement.clientWidth, window.innerHeight * 0.7);
+      canvas.width = size;
+      canvas.height = size;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // === RUSSIAN QUESTIONS ===
+    const russianQuestions = [
+      { phrase: "выкачАнная вода", letter: "А", correctIndex: 2 },
+      { phrase: "тащАщий бревно", letter: "А", correctIndex: 1 },
+      { phrase: "тешАщий душу", letter: "А", correctIndex: 1 },
+      { phrase: "настоЯнная на травах", letter: "Я", correctIndex: 3 },
+      { phrase: "вывалЯнный в снегу", letter: "Я", correctIndex: 3 },
+      { phrase: "рассеЯвший сомнения", letter: "Я", correctIndex: 3 },
+      { phrase: "повеЯвший внезапно", letter: "Я", correctIndex: 3 },
+      { phrase: "понадеЯвшийся на шпаргалку", letter: "Я", correctIndex: 3 },
+      { phrase: "верЯщий в успех", letter: "Я", correctIndex: 1 },
+      { phrase: "самоклеЯщаяся бумага", letter: "Я", correctIndex: 1 },
+      { phrase: "пишУщий пером", letter: "У", correctIndex: 0 },
+      { phrase: "курлычУщие журавли", letter: "У", correctIndex: 0 },
+      { phrase: "мурлычУщий кот", letter: "У", correctIndex: 0 },
+      { phrase: "мелЮщий кофе", letter: "Ю", correctIndex: 0 },
+      { phrase: "дремлЮщий в холодке", letter: "Ю", correctIndex: 0 },
+      { phrase: "надеЮщийся на шпаргалку", letter: "Ю", correctIndex: 0 },
+      { phrase: "приклеИвшийся скотч", letter: "И", correctIndex: 5 },
+      { phrase: "построИвший дом", letter: "И", correctIndex: 5 },
+      { phrase: "видИмый результат", letter: "И", correctIndex: 1 },
+      { phrase: "наклеЕнный ярлык", letter: "Е", correctIndex: 5 },
+      { phrase: "вывалЕнный из мешка", letter: "Е", correctIndex: 5 },
+      { phrase: "замешАнный в преступлении", letter: "А", correctIndex: 2 },
+      { phrase: "пашУщий за двоих", letter: "У", correctIndex: 0 },
+      { phrase: "колЮщийся куст", letter: "Ю", correctIndex: 0 },
+      { phrase: "обезводИвший реку", letter: "И", correctIndex: 5 },
+      { phrase: "обессилЕвший путник", letter: "Е", correctIndex: 4 },
+      { phrase: "обидЕвшийся на друга", letter: "Е", correctIndex: 4 }
+    ];
+
+    // === MAZE GENERATION (DFS Backtracker) ===
+    function generateMaze() {
+      const size = MAZE_SIZE;
+      maze = Array(size).fill(null).map(() => Array(size).fill(1)); // 1 = wall
+
+      const stack = [];
+      const directions = [
+        { dx: 0, dy: -2, wallDx: 0, wallDy: -1 },
+        { dx: 2, dy: 0, wallDx: 1, wallDy: 0 },
+        { dx: 0, dy: 2, wallDx: 0, wallDy: 1 },
+        { dx: -2, dy: 0, wallDx: -1, wallDy: 0 }
+      ];
+
+      function inBounds(x, y) {
+        return x >= 0 && x < size && y >= 0 && y < size;
+      }
+
+      function carve(x, y) {
+        maze[y][x] = 0; // path
+        const neighbors = [];
+        for (const dir of directions) {
+          const nx = x + dir.dx;
+          const ny = y + dir.dy;
+          if (inBounds(nx, ny) && maze[ny][nx] === 1) {
+            neighbors.push({ x: nx, y: ny, wallX: x + dir.wallDx, wallY: y + dir.wallDy });
+          }
+        }
+
+        while (neighbors.length > 0) {
+          const idx = Math.floor(Math.random() * neighbors.length);
+          const n = neighbors.splice(idx, 1)[0];
+          maze[n.wallY][n.wallX] = 0; // carve wall
+          carve(n.x, n.y);
+        }
+      }
+
+      carve(1, 1);
+      // Ensure (1,1) and near edges are open
+      maze[1][0] = 0; // entrance
+      maze[0][1] = 0;
+    }
+
+    // === UTILS ===
+    function getRandomOpenCell() {
+      let attempts = 0;
+      const maxAttempts = 1000;
+      while (attempts < maxAttempts) {
+        const x = Math.floor(Math.random() * (MAZE_SIZE - 2)) + 1;
+        const y = Math.floor(Math.random() * (MAZE_SIZE - 2)) + 1;
+        if (maze[y][x] === 0) return { x, y };
+        attempts++;
+      }
+      return { x: 1, y: 1 }; // fallback
+    }
+
+    function placeKeys() {
+      keys = [];
+      for (let i = 0; i < 10; i++) {
+        keys.push(getRandomOpenCell());
+      }
+    }
+
+    function placeEnemies() {
+      enemies = [];
+      for (let i = 0; i < 5; i++) {
+        enemies.push(getRandomOpenCell());
+      }
+    }
+
+    function placeExit() {
+      exit = getRandomOpenCell();
+    }
+
+    // === RENDERING ===
+    function render() {
+      const scale = canvas.width / (MAZE_SIZE * CELL_SIZE);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(scale, scale);
+
+      // Draw maze
+      for (let y = 0; y < MAZE_SIZE; y++) {
+        for (let x = 0; x < MAZE_SIZE; x++) {
+          if (maze[y][x] === 1) {
+            ctx.fillStyle = WALL_COLOR;
+            ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+          } else {
+            ctx.fillStyle = PATH_COLOR;
+            ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+          }
+        }
+      }
+
+      // Draw keys
+      keys.forEach((key, i) => {
+        if (!collectedKeys[i]) {
+          ctx.fillStyle = KEY_COLOR;
+          ctx.beginPath();
+          ctx.arc(
+            key.x * CELL_SIZE + CELL_SIZE / 2,
+            key.y * CELL_SIZE + CELL_SIZE / 2,
+            CELL_SIZE / 3,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+      });
+
+      // Draw exit (if active)
+      if (exit && allKeysCollected) {
+        ctx.fillStyle = EXIT_COLOR;
+        ctx.beginPath();
+        ctx.arc(
+          exit.x * CELL_SIZE + CELL_SIZE / 2,
+          exit.y * CELL_SIZE + CELL_SIZE / 2,
+          CELL_SIZE / 2.5,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        // Glow
+        ctx.shadowColor = EXIT_COLOR;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      // Draw enemies
+      enemies.forEach(enemy => {
+        ctx.fillStyle = ENEMY_COLOR;
+        ctx.beginPath();
+        ctx.arc(
+          enemy.x * CELL_SIZE + CELL_SIZE / 2,
+          enemy.y * CELL_SIZE + CELL_SIZE / 2,
+          CELL_SIZE / 3,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      });
+
+      // Draw player (with glow)
+      ctx.fillStyle = PLAYER_COLOR;
+      ctx.beginPath();
+      ctx.arc(
+        player.x * CELL_SIZE + CELL_SIZE / 2,
+        player.y * CELL_SIZE + CELL_SIZE / 2,
+        CELL_SIZE / 2.5,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+      // Glow effect
+      ctx.shadowColor = PLAYER_COLOR;
+      ctx.shadowBlur = 15;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.resetTransform();
+    }
+
+    // === GAME LOGIC ===
+    function movePlayer(dx, dy) {
+      const nx = player.x + dx;
+      const ny = player.y + dy;
+
+      if (nx >= 0 && nx < MAZE_SIZE && ny >= 0 && ny < MAZE_SIZE && maze[ny][nx] === 0) {
+        player.x = nx;
+        player.y = ny;
+        steps++;
+        document.getElementById('steps').textContent = steps;
+
+        // Check key pickup
+        for (let i = 0; i < keys.length; i++) {
+          if (!collectedKeys[i] && keys[i].x === player.x && keys[i].y === player.y) {
+            showQuestionModal(i);
+            return;
+          }
+        }
+
+        // Check exit (only if all keys collected)
+        if (allKeysCollected && exit && exit.x === player.x && exit.y === player.y) {
+          // Wait one tick to ensure render
+          setTimeout(checkWin, 0);
+          return;
+        }
+
+        // Check enemy collision
+        if (allKeysCollected) {
+          for (const enemy of enemies) {
+            if (enemy.x === player.x && enemy.y === player.y) {
+              // Move exit
+              exit = getRandomOpenCell();
+              render();
+              return;
+            }
+          }
+        }
+
+        render();
+      }
+    }
+
+    function moveEnemies() {
+      if (!allKeysCollected) return;
+      enemies.forEach(enemy => {
+        if (Math.random() < 0.3) {
+          const directions = [
+            { dx: 0, dy: -1 },
+            { dx: 1, dy: 0 },
+            { dx: 0, dy: 1 },
+            { dx: -1, dy: 0 }
+          ];
+          const dir = directions[Math.floor(Math.random() * 4)];
+          const nx = enemy.x + dir.dx;
+          const ny = enemy.y + dir.dy;
+          if (nx >= 0 && nx < MAZE_SIZE && ny >= 0 && ny < MAZE_SIZE && maze[ny][nx] === 0) {
+            enemy.x = nx;
+            enemy.y = ny;
+          }
+        }
+      });
+      render();
+    }
+
+    function checkWin() {
+      if (allKeysCollected && exit && player.x === exit.x && player.y === exit.y) {
+        // Stop game
+        clearInterval(timerInterval);
+        cancelAnimationFrame(animationId);
+
+        // Show win modal
+        document.getElementById('finalTime').textContent = document.getElementById('timer').textContent;
+        document.getElementById('finalSteps').textContent = steps;
+        document.getElementById('winModal').style.display = 'flex';
+      }
+    }
+
+    // === MODALS ===
+    function showQuestionModal(keyIndex) {
+      const q = russianQuestions[Math.floor(Math.random() * russianQuestions.length)];
+      document.getElementById('questionText').innerHTML = `
+        <div style="margin-bottom: 10px; font-size: 1.4rem; font-weight: bold;">${q.phrase}</div>
+        <div>В суффиксе гласная <span style="color: #fbbf24; font-weight: bold;">${q.letter}</span>, так как:</div>
+      `;
+
+      const container = document.getElementById('optionsContainer');
+      container.innerHTML = '';
+      
+      const options = [
+        "от глагола 1 спряжения",
+        "от глагола 2 спряжения", 
+        "от глагола на -ать",
+        "от глагола на -ять",
+        "от глагола на -еть",
+        "от глагола на -ить"
+      ];
+
+      options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.onclick = () => {
+          if (idx === q.correctIndex) {
+            // Correct!
+            collectedKeys[keyIndex] = true;
+            document.getElementById(`key-${keyIndex}`).classList.add('active');
+            // Remove key
+            keys[keyIndex] = { x: -100, y: -100 }; // hide offscreen
+            // Check if all collected
+            if (collectedKeys.every(Boolean)) {
+              allKeysCollected = true;
+              placeExit();
+              placeEnemies();
+            }
+          } else {
+            // Wrong — relocate key
+            keys[keyIndex] = getRandomOpenCell();
+          }
+          document.getElementById('questionModal').style.display = 'none';
+          render();
+        };
+        container.appendChild(btn);
+      });
+
+      document.getElementById('questionModal').style.display = 'flex';
+    }
+
+    // Close modals on click outside or close button
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', e => {
+        if (e.target === modal) modal.style.display = 'none';
+      });
+    });
+
+    document.getElementById('winCloseBtn').onclick = () => {
+      document.getElementById('winModal').style.display = 'none';
+      resetGame();
+    };
+
+    // === INPUT ===
+    window.addEventListener('keydown', e => {
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          movePlayer(0, -1);
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          movePlayer(0, 1);
+          break;
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          movePlayer(-1, 0);
+          break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          movePlayer(1, 0);
+          break;
+      }
+    });
+
+    // === TIMER ===
+    function startTimer() {
+      startTime = Date.now();
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const minutes = Math.floor(elapsed / 60000).toString().padStart(2, '0');
+        const seconds = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
+        const tenths = Math.floor((elapsed % 1000) / 100);
+        document.getElementById('timer').textContent = `${minutes}:${seconds}.${tenths}`;
+      }, 100);
+    }
+
+    // === INIT & RESET ===
+    function resetGame() {
+      generateMaze();
+      player = { x: 1, y: 1 };
+      collectedKeys = Array(10).fill(false);
+      keys = [];
+      exit = null;
+      enemies = [];
+      allKeysCollected = false;
+      steps = 0;
+      document.getElementById('steps').textContent = '0';
+      
+      // Reset key icons
+      for (let i = 0; i < 10; i++) {
+        document.getElementById(`key-${i}`).classList.remove('active');
+      }
+
+      placeKeys();
+      startTimer();
+      render();
+      
+      // Start enemy movement loop
+      if (animationId) cancelAnimationFrame(animationId);
+      const animate = () => {
+        moveEnemies();
+        animationId = requestAnimationFrame(animate);
+      };
+      animate();
+    }
+
+    document.getElementById('newMazeBtn').onclick = resetGame;
+    document.getElementById('replayBtn').onclick = () => {
+      // Reset only position and timer, keep keys/enemies
+      player = { x: 1, y: 1 };
+      steps = 0;
+      document.getElementById('steps').textContent = '0';
+      startTimer();
+      render();
+    };
+
+    // === START ===
+    resetGame();
+  </script>
+</body>
+</html>

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>СУФФИКСЫ-ПЯТНАШКИ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6ecbf5 0%, #059ee3 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #ff6b6b;
+            text-shadow: 2px 2px 0 #fff, 4px 4px 0 rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        #gameCanvas {
+            background-color: #f0f8ff;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin: 0 auto 20px;
+            display: block;
+            max-width: 100%;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+            padding: 10px;
+        }
+        
+        .round-info {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #118ab2;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            background-color: #118ab2;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        #newGame {
+            background-color: #06d6a0;
+        }
+        
+        #passTurn {
+            background-color: #ffd166;
+            color: #333;
+        }
+        
+        #help {
+            background-color: #ef476f;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 700px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            animation: popIn 0.3s ease-out;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .modal h2 {
+            color: #118ab2;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-question {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-option {
+            padding: 12px 20px;
+            background-color: #ffd166;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-size: 1.1rem;
+        }
+        
+        .quiz-option:hover {
+            background-color: #ffc145;
+            transform: scale(1.02);
+        }
+        
+        .result {
+            font-size: 1.2rem;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        
+        .correct {
+            color: #06d6a0;
+        }
+        
+        .incorrect {
+            color: #ef476f;
+        }
+        
+        footer {
+            margin-top: 10px;
+            color: #333;
+            text-align: center;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-wrap: wrap;
+            }
+            
+            .quiz-option {
+                font-size: 1rem;
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>СУФФИКСЫ-ПЯТНАШКИ</h1>
+        
+        <div class="game-info">
+            <div class="round-info" id="round-info">Раунд 1 из 4</div>
+        </div>
+        
+        <canvas id="gameCanvas" width="700" height="650"></canvas>
+        
+        <div class="controls">
+            <button id="newGame">Новая игра</button>
+            <button id="passTurn">Передать ход</button>
+            <button id="help">Помощь</button>
+        </div>
+        
+        <footer>
+            <p>Игра для изучения суффиксов - Учитесь весело!</p>
+        </footer>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div class="modal" id="quiz-modal">
+        <div class="modal-content">
+            <h2>Время викторины!</h2>
+            <div class="quiz-question" id="quiz-question"></div>
+            <div class="quiz-options" id="quiz-options">
+                <!-- Options will be generated by JavaScript -->
+            </div>
+            <div class="result" id="quiz-result"></div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="help-modal">
+        <div class="modal-content">
+            <h2>Как играть</h2>
+            <p>1. По очереди открывайте по две карточки, чтобы найти пары.</p>
+            <p>2. Когда найдете пару, ответьте на вопрос викторины.</p>
+            <p>3. Правильный ответ = 1 очко и продолжение хода.</p>
+            <p>4. Неправильный ответ = 0 очков, ход переходит другому игроку.</p>
+            <p>5. Игра состоит из 4 раундов. Побеждает игрок с наибольшим количеством очков!</p>
+            <button id="close-help">Понятно!</button>
+        </div>
+    </div>
+
+    <!-- Round Complete Modal -->
+    <div class="modal" id="round-complete-modal">
+        <div class="modal-content">
+            <h2>Раунд завершен!</h2>
+            <div id="round-results"></div>
+            <button id="next-round">Следующий раунд</button>
+        </div>
+    </div>
+
+    <!-- Winner Modal -->
+    <div class="modal" id="winner-modal">
+        <div class="modal-content">
+            <h2>Игра окончена!</h2>
+            <div id="winner-message"></div>
+            <button id="play-again">Играть снова</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            players: [
+                { id: 1, name: "Игрок 1", score: 0, active: true },
+                { id: 2, name: "Игрок 2", score: 0, active: false }
+            ],
+            cards: [],
+            flippedCards: [],
+            matchedPairs: 0,
+            totalPairs: 8,
+            gameStarted: false,
+            canFlip: true,
+            cardWidth: 120,
+            cardHeight: 120,
+            cardSpacing: 15,
+            gridX: 50,
+            gridY: 120,
+            animationProgress: 0,
+            animationSpeed: 0.1,
+            animatingCards: [],
+            currentLetter: null,
+            currentRound: 1,
+            totalRounds: 4,
+            usedExamples: {
+                "А": [],
+                "Я": [],
+                "У": [],
+                "Ю": [],
+                "Е": [],
+                "И": [],
+                "О": [],
+                "Ё": []
+            }
+        };
+
+        // Animal data with Russian letters
+        const animals = [
+            { name: "А", color: "#ff9a5a", letter: "А" },
+            { name: "Я", color: "#ff6b6b", letter: "Я" },
+            { name: "У", color: "#6ecbf5", letter: "У" },
+            { name: "Ю", color: "#06d6a0", letter: "Ю" },
+            { name: "Е", color: "#118ab2", letter: "Е" },
+            { name: "И", color: "#ffd166", letter: "И" },
+            { name: "О", color: "#ef476f", letter: "О" },
+            { name: "Ё", color: "#9d4edd", letter: "Ё" }
+        ];
+
+        // Word groups for each letter with 4 examples each
+        const wordGroups = {
+            "А": [
+                "выкач_нная вода",
+                "тащ_ший бревно", 
+                "игольч_тый покров",
+                "теш_щий душу"
+            ],
+            "Я": [
+                "насто_нная на травах",
+                "вывал_нный в снегу",
+                "рассе_вший сомнения",
+                "пове_вший внезапно"
+            ],
+            "У": [
+                "пиш_щий пером",
+                "курлыч_щие журавли",
+                "мурлыч_щий кот",
+                "паш_щий за двоих"
+            ],
+            "Ю": [
+                "мел_щий кофе",
+                "дремл_щий в холодке",
+                "наде_щийся на шпаргалку",
+                "кол_щийся куст"
+            ],
+            "И": [
+                "недвиж_мое имущество",
+                "прикле_вшийся скотч",
+                "постро_вший дом",
+                "обезвод_вший реку"
+            ],
+            "Е": [
+                "накле_нный ярлык",
+                "вывал_нный из мешка",
+                "занавеш_нное окно",
+                "обессил_вший путник"
+            ],
+            "О": [
+                "реч_вку выучили",
+                "плащ_вку раскроили",
+                "мелоч_вка осталась",
+                "холщ_вый мешок"
+            ],
+            "Ё": [
+                "напряж_нная работа",
+                "сгущ_нку купить",
+                "раскорч_вка нужна",
+                "туш_нку открыть"
+            ]
+        };
+
+        // DOM elements
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const newGameBtn = document.getElementById('newGame');
+        const passTurnBtn = document.getElementById('passTurn');
+        const helpBtn = document.getElementById('help');
+        const quizModal = document.getElementById('quiz-modal');
+        const quizQuestion = document.getElementById('quiz-question');
+        const quizOptions = document.getElementById('quiz-options');
+        const quizResult = document.getElementById('quiz-result');
+        const helpModal = document.getElementById('help-modal');
+        const closeHelpBtn = document.getElementById('close-help');
+        const roundCompleteModal = document.getElementById('round-complete-modal');
+        const roundResults = document.getElementById('round-results');
+        const nextRoundBtn = document.getElementById('next-round');
+        const winnerModal = document.getElementById('winner-modal');
+        const winnerMessage = document.getElementById('winner-message');
+        const playAgainBtn = document.getElementById('play-again');
+        const roundInfo = document.getElementById('round-info');
+
+        // Initialize the game
+        function initGame() {
+            resetGameState();
+            createCards();
+            gameState.gameStarted = true;
+            updateRoundInfo();
+            drawGame();
+        }
+
+        // Reset game state
+        function resetGameState() {
+            gameState.players[0].score = 0;
+            gameState.players[1].score = 0;
+            gameState.players[0].active = true;
+            gameState.players[1].active = false;
+            gameState.cards = [];
+            gameState.flippedCards = [];
+            gameState.matchedPairs = 0;
+            gameState.canFlip = true;
+            gameState.animatingCards = [];
+            gameState.currentLetter = null;
+            gameState.currentRound = 1;
+            
+            // Reset used examples
+            Object.keys(gameState.usedExamples).forEach(letter => {
+                gameState.usedExamples[letter] = [];
+            });
+        }
+
+        // Update round info display
+        function updateRoundInfo() {
+            roundInfo.textContent = `Раунд ${gameState.currentRound} из ${gameState.totalRounds}`;
+        }
+
+        // Create card pairs
+        function createCards() {
+            // Duplicate animals to create pairs
+            const animalPairs = [...animals, ...animals];
+            
+            // Shuffle the cards
+            animalPairs.sort(() => Math.random() - 0.5);
+            
+            // Create card objects
+            gameState.cards = animalPairs.map((animal, index) => ({
+                id: index,
+                animal: animal.name,
+                color: animal.color,
+                letter: animal.letter,
+                row: Math.floor(index / 4),
+                col: index % 4,
+                x: gameState.gridX + (index % 4) * (gameState.cardWidth + gameState.cardSpacing),
+                y: gameState.gridY + Math.floor(index / 4) * (gameState.cardHeight + gameState.cardSpacing),
+                flipped: false,
+                matched: false,
+                animationProgress: 0
+            }));
+        }
+
+        // Draw the game
+        function drawGame() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background
+            drawBackground();
+            
+            // Draw player info
+            drawPlayerInfo();
+            
+            // Draw cards
+            drawCards();
+            
+            // Draw game status
+            drawGameStatus();
+            
+            // Continue animation if needed
+            requestAnimationFrame(drawGame);
+        }
+
+        // Draw background
+        function drawBackground() {
+            // Draw header background
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.fillRect(0, 0, canvas.width, 80);
+            
+            // Draw game board background
+            ctx.fillStyle = '#f0f8ff';
+            ctx.fillRect(
+                gameState.gridX - 10, 
+                gameState.gridY - 10, 
+                4 * (gameState.cardWidth + gameState.cardSpacing) + 10, 
+                4 * (gameState.cardHeight + gameState.cardSpacing) + 10
+            );
+        }
+
+        // Draw player info
+        function drawPlayerInfo() {
+            const player1 = gameState.players[0];
+            const player2 = gameState.players[1];
+            
+            // Draw player 1 info
+            ctx.fillStyle = player1.active ? '#ffd166' : 'rgba(255, 209, 102, 0.5)';
+            ctx.fillRect(50, 40, 200, 30);
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 18px "Comic Sans MS"';
+            ctx.textAlign = 'left';
+            ctx.fillText(`${player1.name}: ${player1.score}`, 70, 60);
+            
+            // Draw player 2 info
+            ctx.fillStyle = player2.active ? '#ffd166' : 'rgba(255, 209, 102, 0.5)';
+            ctx.fillRect(canvas.width - 250, 40, 200, 30);
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 18px "Comic Sans MS"';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${player2.name}: ${player2.score}`, canvas.width - 70, 60);
+        }
+
+        // Draw cards
+        function drawCards() {
+            gameState.cards.forEach(card => {
+                if (card.animationProgress < 1 && card.flipped) {
+                    card.animationProgress += gameState.animationSpeed;
+                    if (card.animationProgress > 1) card.animationProgress = 1;
+                } else if (card.animationProgress > 0 && !card.flipped && !card.matched) {
+                    card.animationProgress -= gameState.animationSpeed;
+                    if (card.animationProgress < 0) card.animationProgress = 0;
+                }
+                
+                drawCard(card);
+            });
+        }
+
+        // Draw a single card
+        function drawCard(card) {
+            const x = card.x;
+            const y = card.y;
+            const width = gameState.cardWidth;
+            const height = gameState.cardHeight;
+            
+            // Draw card background with rounded corners
+            ctx.fillStyle = card.matched ? '#06d6a0' : (card.flipped ? card.color : '#ff6b6b');
+            roundedRect(ctx, x, y, width, height, 15);
+            
+            // Draw card content based on flip state
+            if (card.flipped || card.animationProgress > 0.5) {
+                // Draw Russian letter
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 60px "Comic Sans MS"';
+                ctx.textAlign = 'center';
+                ctx.fillText(card.letter, x + width/2, y + height/2 + 20);
+            } else {
+                // Draw card back
+                ctx.fillStyle = '#ff9a5a';
+                roundedRect(ctx, x, y, width, height, 15);
+                
+                // Draw question mark
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 40px "Comic Sans MS"';
+                ctx.textAlign = 'center';
+                ctx.fillText('?', x + width/2, y + height/2 + 10);
+            }
+            
+            // Draw flip animation if in progress
+            if (card.animationProgress > 0 && card.animationProgress < 1) {
+                const flipWidth = width * (1 - Math.abs(card.animationProgress - 0.5) * 2);
+                ctx.fillStyle = '#ff9a5a';
+                ctx.fillRect(x + (width - flipWidth)/2, y, flipWidth, height);
+            }
+        }
+
+        // Draw game status
+        function drawGameStatus() {
+            ctx.fillStyle = '#333';
+            ctx.font = '16px "Comic Sans MS"';
+            ctx.textAlign = 'center';
+            
+            if (gameState.matchedPairs === gameState.totalPairs) {
+                ctx.fillText('Раунд завершен! Все пары найдены!', canvas.width / 2, canvas.height - 20);
+            } else {
+                const currentPlayer = gameState.players.find(p => p.active);
+                ctx.fillText(`Сейчас ходит: ${currentPlayer.name}`, canvas.width / 2, canvas.height - 20);
+            }
+        }
+
+        // Helper function to draw rounded rectangles
+        function roundedRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Handle canvas click
+        function handleCanvasClick(e) {
+            if (!gameState.canFlip) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check if click is on a card
+            gameState.cards.forEach(card => {
+                if (!card.flipped && !card.matched && 
+                    x >= card.x && x <= card.x + gameState.cardWidth &&
+                    y >= card.y && y <= card.y + gameState.cardHeight) {
+                    
+                    // Flip the card
+                    card.flipped = true;
+                    gameState.flippedCards.push(card);
+                    
+                    // Check for match if two cards are flipped
+                    if (gameState.flippedCards.length === 2) {
+                        gameState.canFlip = false;
+                        setTimeout(checkMatch, 1000);
+                    }
+                }
+            });
+        }
+
+        // Check if flipped cards match
+        function checkMatch() {
+            const [card1, card2] = gameState.flippedCards;
+            
+            if (card1.letter === card2.letter) {
+                // Match found
+                card1.matched = true;
+                card2.matched = true;
+                gameState.matchedPairs++;
+                
+                // Store the current letter for the quiz
+                gameState.currentLetter = card1.letter;
+                
+                // Show quiz
+                showQuiz();
+            } else {
+                // No match, flip cards back
+                card1.flipped = false;
+                card2.flipped = false;
+                
+                // Switch player
+                switchPlayer();
+            }
+            
+            // Reset flipped cards
+            gameState.flippedCards = [];
+            gameState.canFlip = true;
+            
+            // Check if round is over
+            if (gameState.matchedPairs === gameState.totalPairs) {
+                setTimeout(showRoundComplete, 1000);
+            }
+        }
+
+        // Show quiz modal
+        function showQuiz() {
+            const currentLetter = gameState.currentLetter;
+            
+            // Get available examples for this letter in current round
+            const availableExamples = wordGroups[currentLetter].filter(
+                example => !gameState.usedExamples[currentLetter].includes(example)
+            );
+            
+            // If no examples left, use any example (shouldn't happen with 4 rounds and 4 examples)
+            let selectedExample;
+            if (availableExamples.length > 0) {
+                selectedExample = availableExamples[Math.floor(Math.random() * availableExamples.length)];
+                gameState.usedExamples[currentLetter].push(selectedExample);
+            } else {
+                // Fallback - use a random example from the group
+                selectedExample = wordGroups[currentLetter][Math.floor(Math.random() * wordGroups[currentLetter].length)];
+            }
+            
+            quizQuestion.textContent = `Вы нашли пару букв "${currentLetter}". Выберите слово, в котором пропущена именно эта буква:`;
+            quizResult.textContent = '';
+            quizResult.className = 'result';
+            
+            // Clear previous options
+            quizOptions.innerHTML = '';
+            
+            // Create a list of all phrases from all groups - one from each group
+            let allPhrases = [];
+            Object.keys(wordGroups).forEach(letter => {
+                const phrases = wordGroups[letter];
+                // Select one random phrase from each group
+                const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+                allPhrases.push({
+                    text: randomPhrase,
+                    correct: letter === currentLetter
+                });
+            });
+            
+            // Replace the correct option with our selected example
+            const correctIndex = allPhrases.findIndex(phrase => phrase.correct);
+            if (correctIndex !== -1) {
+                allPhrases[correctIndex].text = selectedExample;
+            }
+            
+            // Shuffle the phrases
+            for (let i = allPhrases.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allPhrases[i], allPhrases[j]] = [allPhrases[j], allPhrases[i]];
+            }
+            
+            // Add phrases to the quiz options
+            allPhrases.forEach(phrase => {
+                const option = document.createElement('div');
+                option.className = 'quiz-option';
+                option.textContent = phrase.text;
+                option.onclick = () => checkAnswer(phrase.correct);
+                quizOptions.appendChild(option);
+            });
+            
+            quizModal.style.display = 'flex';
+        }
+
+        // Check quiz answer
+        function checkAnswer(isCorrect) {
+            const currentPlayer = gameState.players.find(p => p.active);
+            
+            if (isCorrect) {
+                // Correct answer
+                quizResult.textContent = 'Правильно! +1 очко';
+                quizResult.className = 'result correct';
+                
+                // Update score
+                currentPlayer.score++;
+                
+                // Close modal after delay
+                setTimeout(() => {
+                    quizModal.style.display = 'none';
+                    // Player continues their turn
+                }, 1500);
+            } else {
+                // Wrong answer
+                quizResult.textContent = 'Неправильно! Ход переходит другому игроку';
+                quizResult.className = 'result incorrect';
+                
+                // Close modal after delay and switch player
+                setTimeout(() => {
+                    quizModal.style.display = 'none';
+                    switchPlayer();
+                }, 1500);
+            }
+        }
+
+        // Switch to the next player
+        function switchPlayer() {
+            gameState.players[0].active = !gameState.players[0].active;
+            gameState.players[1].active = !gameState.players[1].active;
+        }
+
+        // Show round complete modal
+        function showRoundComplete() {
+            const player1 = gameState.players[0];
+            const player2 = gameState.players[1];
+            
+            roundResults.innerHTML = `
+                <p>Результаты раунда ${gameState.currentRound}:</p>
+                <p><strong>${player1.name}:</strong> ${player1.score} очков</p>
+                <p><strong>${player2.name}:</strong> ${player2.score} очков</p>
+            `;
+            
+            roundCompleteModal.style.display = 'flex';
+        }
+
+        // Start next round
+        function startNextRound() {
+            gameState.currentRound++;
+            
+            if (gameState.currentRound > gameState.totalRounds) {
+                // Game over
+                showWinner();
+                return;
+            }
+            
+            // Reset for new round
+            gameState.matchedPairs = 0;
+            gameState.flippedCards = [];
+            gameState.canFlip = true;
+            
+            // Create new cards
+            createCards();
+            
+            // Update round info
+            updateRoundInfo();
+            
+            // Close modal
+            roundCompleteModal.style.display = 'none';
+        }
+
+        // Show winner modal
+        function showWinner() {
+            const player1 = gameState.players[0];
+            const player2 = gameState.players[1];
+            
+            let message = '';
+            if (player1.score > player2.score) {
+                message = `Поздравляем! ${player1.name} побеждает со счетом ${player1.score}:${player2.score}!`;
+            } else if (player2.score > player1.score) {
+                message = `Поздравляем! ${player2.name} побеждает со счетом ${player2.score}:${player1.score}!`;
+            } else {
+                message = `Ничья! Оба игрока набрали по ${player1.score} очков!`;
+            }
+            
+            winnerMessage.innerHTML = `
+                <p>${message}</p>
+                <p>Игра завершена после ${gameState.totalRounds} раундов!</p>
+            `;
+            winnerModal.style.display = 'flex';
+        }
+
+        // Event listeners
+        canvas.addEventListener('click', handleCanvasClick);
+        
+        newGameBtn.addEventListener('click', initGame);
+        
+        passTurnBtn.addEventListener('click', () => {
+            if (gameState.gameStarted) {
+                switchPlayer();
+            }
+        });
+        
+        helpBtn.addEventListener('click', () => {
+            helpModal.style.display = 'flex';
+        });
+        
+        closeHelpBtn.addEventListener('click', () => {
+            helpModal.style.display = 'none';
+        });
+        
+        nextRoundBtn.addEventListener('click', startNextRound);
+        
+        playAgainBtn.addEventListener('click', () => {
+            winnerModal.style.display = 'none';
+            initGame();
+        });
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === quizModal) {
+                quizModal.style.display = 'none';
+            }
+            if (e.target === helpModal) {
+                helpModal.style.display = 'none';
+            }
+            if (e.target === roundCompleteModal) {
+                roundCompleteModal.style.display = 'none';
+            }
+            if (e.target === winnerModal) {
+                winnerModal.style.display = 'none';
+            }
+        });
+        
+        // Close modals with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                quizModal.style.display = 'none';
+                helpModal.style.display = 'none';
+                roundCompleteModal.style.display = 'none';
+                winnerModal.style.display = 'none';
+            }
+        });
+
+        // Initialize the game on page load
+        window.onload = initGame;
+    </script>
+</body>
+</html>

@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Суффиксы-одиночки</title>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    html { height: 100%; }
+    * { box-sizing: border-box; }
+
+    .container {
+      width: 90%;
+      max-width: 900px;
+      padding: 40px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .title {
+      font-size: 48px;
+      font-weight: bold;
+      color: #667eea;
+      margin: 0 0 10px 0;
+    }
+
+    .subtitle {
+      font-size: 20px;
+      color: #666;
+      margin: 0;
+    }
+
+    .suffix-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .suffix-btn {
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .suffix-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    }
+
+    .test-btn {
+      width: 100%;
+      padding: 25px;
+      font-size: 28px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    .test-btn:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 10px 30px rgba(245, 87, 108, 0.7);
+      animation: none;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal.active { display: flex; }
+
+    .card {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80%;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-title {
+      font-size: 36px;
+      font-weight: bold;
+      color: #667eea;
+      margin: 0 0 20px 0;
+      text-align: center;
+    }
+
+    .card-section {
+      margin-bottom: 25px;
+    }
+
+    .card-section-title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .example-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .example-item {
+      padding: 10px 15px;
+      margin-bottom: 8px;
+      background: #f0f4ff;
+      border-radius: 8px;
+      font-size: 27px;
+      color: #333;
+    }
+
+    .exception-item {
+      background: #fff0f0;
+      color: #d32f2f;
+    }
+
+    .attention-item {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .close-btn {
+      width: 100%;
+      padding: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background 0.2s;
+    }
+
+    .close-btn:hover {
+      background: #5568d3;
+    }
+
+    .test-container { display: none; }
+
+    .test-container.active { display: block; }
+
+    .test-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .test-title {
+      font-size: 36px;
+      font-weight: bold;
+      color: #667eea;
+      margin: 0 0 10px 0;
+    }
+
+    .test-instruction {
+      font-size: 18px;
+      color: #666;
+      margin: 0;
+    }
+
+    .question {
+      background: #f8f9ff;
+      padding: 25px;
+      margin-bottom: 20px;
+      border-radius: 15px;
+      border-left: 5px solid #667eea;
+    }
+
+    .question-number {
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .question-text {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 15px;
+    }
+
+    .answer-input {
+      width: 60px;
+      padding: 10px;
+      font-size: 20px;
+      text-align: center;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      text-transform: lowercase;
+    }
+
+    .answer-input.correct {
+      border-color: #4caf50;
+      background: #e8f5e9;
+    }
+
+    .answer-input.incorrect {
+      border-color: #f44336;
+      background: #ffebee;
+    }
+
+    .check-btn {
+      width: 100%;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+      color: white;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    }
+
+    .check-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+    }
+
+    .check-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .result {
+      display: none;
+      text-align: center;
+      padding: 30px;
+      background: #f0f4ff;
+      border-radius: 15px;
+      margin-top: 20px;
+    }
+
+    .result.active {
+      display: block;
+    }
+
+    .result-text {
+      font-size: 28px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .back-btn {
+      padding: 15px 40px;
+      font-size: 20px;
+      font-weight: bold;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .back-btn:hover {
+      background: #5568d3;
+    }
+
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: #f093fb;
+      position: absolute;
+      animation: confetti-fall 3s linear forwards;
+    }
+
+    @keyframes confetti-fall {
+      to {
+        transform: translateY(100%) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    .congratulation {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 50px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      z-index: 2000;
+      text-align: center;
+    }
+
+    .congratulation.active {
+      display: block;
+      animation: bounce 0.5s;
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+    }
+
+    .congratulation-text {
+      font-size: 36px;
+      font-weight: bold;
+      color: #4caf50;
+      margin: 0;
+    }
+
+    /* ======== Визуализация чата для теста ======== */
+    .test-decor {
+      position: relative;
+      height: 80px;
+      margin-bottom: 30px;
+    }
+
+    .calf, .bird {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 48px;
+      filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.15));
+    }
+
+    .calf { left: 0; }
+    .bird { right: 0; }
+
+    .chat-clouds {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .cloud {
+      background: white;
+      color: #667eea;
+      padding: 10px 18px;
+      border-radius: 24px 20px 22px 16px;
+      font-weight: bold;
+      font-size: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+      animation: gentlyFloat 6s ease-in-out infinite;
+    }
+
+    .cloud:nth-child(1) { animation-delay: 0s;   background: #e3f2fd; color: #1976d2; } /* -тельн- */
+    .cloud:nth-child(2) { animation-delay: 0.5s; background: #fff8e1; color: #e65100; } /* -чат- */
+    .cloud:nth-child(3) { animation-delay: 1s;   background: #f3e5f5; color: #7b1fa2; } /* -еск-/-ист- */
+
+    @keyframes gentlyFloat {
+      0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+      50%      { transform: translate(-50%, -50%) translateY(-6px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="mainScreen">
+      <div class="header">
+        <h1 class="title" id="mainTitle">Суффиксы-одиночки</h1>
+        <p class="subtitle" id="subtitle">Изучайте непарные суффиксы прилагательных</p>
+      </div>
+      <div class="suffix-grid" id="suffixGrid"></div>
+      <button class="test-btn" id="testBtn">Пройти тест</button>
+    </div>
+
+    <div class="test-container" id="testContainer">
+      <!-- Визуализация чата -->
+      <div class="test-decor">
+        <div class="calf">🐮</div>
+        <div class="bird">🐦</div>
+        <div class="chat-clouds">
+          <div class="cloud">-тельн-</div>
+          <div class="cloud">-чат-</div>
+          <div class="cloud">-чив-</div>
+          <div class="cloud">-лив-</div>
+          <div class="cloud">-ческ-</div>
+        </div>
+      </div>
+
+      <div class="test-header">
+        <h2 class="test-title">Тест</h2>
+        <p class="test-instruction" id="testInstruction">Впишите пропущенную гласную в суффиксе</p>
+      </div>
+      <div id="questionsContainer"></div>
+      <button class="check-btn" id="checkBtn">Проверить ответы</button>
+      <div class="result" id="result">
+        <p class="result-text" id="resultText"></p>
+        <button class="back-btn" id="backBtn">Вернуться к изучению</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="card" id="card"></div>
+  </div>
+
+  <div class="congratulation" id="congratulation">
+    <p class="congratulation-text" id="congratulationText">Отлично! Все ответы верны!</p>
+  </div>
+
+  <script>
+    // ---- данные ----
+    const suffixes = [
+      {
+        name: "-ИСТ-",
+        examples: ["напористый", "увесистый", "порывистый", "глинистый"],
+        exceptions: ["доблестный", "горестный"],
+        attention: null
+      },
+      {
+        name: "-ЧИВ-",
+        examples: ["устойчивый", "находчивый", "забывчивый"],
+        exceptions: [],
+        attention: "Если Ч относится к корню, то далее следует или безударный суффикс -ев-, или ударный суффикс -ив-: бахчевые, гуттаперчевый"
+      },
+      {
+        name: "-ЛИВ-",
+        examples: ["назойливый", "приветливый", "въедливый"],
+        exceptions: [],
+        attention: "Если Л относится к корню, то далее следует или безударный суффикс -ев-, или ударный суффикс -ив-: каракулевый, отраслевой, фланелевый, тюлевый"
+      },
+      {
+        name: "-ТЕЛЬН-",
+        examples: ["изумительный", "показательный"],
+        exceptions: [],
+        attention: null
+      },
+      {
+        name: "-ЕСК-",
+        examples: ["греческий", "пророческий"],
+        exceptions: [],
+        attention: null
+      },
+      {
+        name: "-ЧЕСК-",
+        examples: ["творческий", "поведенческий"],
+        exceptions: [],
+        attention: null
+      },
+      {
+        name: "-ЧАТ-",
+        examples: ["бороздчатый", "игольчатый", "клеёнчатый"],
+        exceptions: [],
+        attention: null
+      }
+    ];
+
+    // сюда ты можешь добавлять новые слова — и они тоже появятся в тесте
+    const specialWords = {
+      'напористый': { text: 'напор_стый', answer: 'и' },
+      'увесистый': { text: 'увес_стый', answer: 'и' },
+      'порывистый': { text: 'порыв_стый', answer: 'и' },
+      'глинистый': { text: 'глин_стый', answer: 'и' },
+      'доблестный': { text: 'добл_стный', answer: 'е' },
+      'горестный': { text: 'гор_стный', answer: 'е' },
+      'устойчивый': { text: 'устойч_вый', answer: 'и' },
+      'находчивый': { text: 'находч_вый', answer: 'и' },
+      'забывчивый': { text: 'забывч_вый', answer: 'и' },
+      'назойливый': { text: 'назойл_вый', answer: 'и' },
+      'приветливый': { text: 'приветл_вый', answer: 'и' },
+      'въедливый': { text: 'въедл_вый', answer: 'и' },
+      'изумительный': { text: 'изумит_льный', answer: 'е' },
+      'показательный': { text: 'показат_льный', answer: 'е' },
+      'греческий': { text: 'греч_ский', answer: 'е' },
+      'пророческий': { text: 'пророч_ский', answer: 'е' },
+      'творческий': { text: 'творч_ский', answer: 'е' },
+      'поведенческий': { text: 'поведенч_ский', answer: 'е' },
+      'бороздчатый': { text: 'бороздч_тый', answer: 'а' },
+      'игольчатый': { text: 'игольч_тый', answer: 'а' },
+      'клеёнчатый': { text: 'клеёнч_тый', answer: 'а' },
+
+      /* твои новые */
+      'бахчевые': { text: 'бахч_вые', answer: 'е' },
+      'гуттаперчевый': { text: 'гуттаперч_вый', answer: 'е' },
+      'каракулевый': { text: 'каракул_вый', answer: 'е' },
+      'отраслевой': { text: 'отрасл_вой', answer: 'е' }
+    };
+
+    let testQuestions = [];
+    let userAnswers = [];
+
+    function renderSuffixButtons() {
+      const grid = document.getElementById('suffixGrid');
+      grid.innerHTML = '';
+      suffixes.forEach((suffix, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'suffix-btn';
+        btn.textContent = suffix.name;
+        btn.addEventListener('click', () => showCard(index));
+        grid.appendChild(btn);
+      });
+    }
+
+    function showCard(index) {
+      const suffix = suffixes[index];
+      const modal = document.getElementById('modal');
+      const card = document.getElementById('card');
+
+      let html = `<h2 class="card-title">${suffix.name}</h2>`;
+
+      if (suffix.examples.length > 0) {
+        html += `
+          <div class="card-section">
+            <div class="card-section-title">Примеры:</div>
+            <ul class="example-list">
+              ${suffix.examples.map(ex => `<li class="example-item">${ex}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      if (suffix.exceptions.length > 0) {
+        html += `
+          <div class="card-section">
+            <div class="card-section-title">Исключения:</div>
+            <ul class="example-list">
+              ${suffix.exceptions.map(ex => `<li class="example-item exception-item">${ex}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      if (suffix.attention) {
+        html += `
+          <div class="card-section">
+            <div class="card-section-title">Внимание:</div>
+            <ul class="example-list">
+              <li class="example-item attention-item">${suffix.attention}</li>
+            </ul>
+          </div>
+        `;
+      }
+
+      html += `<button class="close-btn" id="cardCloseBtn">ГОТОВО</button>`;
+
+      card.innerHTML = html;
+      modal.classList.add('active');
+
+      document.getElementById('cardCloseBtn').addEventListener('click', closeCard);
+    }
+
+    function closeCard() {
+      document.getElementById('modal').classList.remove('active');
+    }
+
+    // главная правка: берём не только слова из карточек, но и все из specialWords
+    function generateTest() {
+      testQuestions = [];
+
+      // 1. как раньше — по карточкам
+      suffixes.forEach(suffix => {
+        suffix.examples.forEach(example => {
+          if (specialWords[example]) {
+            testQuestions.push({
+              text: specialWords[example].text,
+              answer: specialWords[example].answer
+            });
+          }
+        });
+        suffix.exceptions.forEach(exception => {
+          if (specialWords[exception]) {
+            testQuestions.push({
+              text: specialWords[exception].text,
+              answer: specialWords[exception].answer
+            });
+          }
+        });
+      });
+
+      // 2. добираем все слова из specialWords, которых ещё нет
+      for (const word in specialWords) {
+        const exists = testQuestions.some(q => q.text === specialWords[word].text);
+        if (!exists) {
+          testQuestions.push({
+            text: specialWords[word].text,
+            answer: specialWords[word].answer
+          });
+        }
+      }
+
+      // 3. перемешиваем
+      testQuestions.sort(() => Math.random() - 0.5);
+    }
+
+    function showTest() {
+      generateTest();
+      userAnswers = new Array(testQuestions.length).fill('');
+
+      document.getElementById('mainScreen').style.display = 'none';
+      document.getElementById('testContainer').classList.add('active');
+
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = '';
+
+      testQuestions.forEach((q, index) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question';
+        questionDiv.innerHTML = `
+          <div class="question-number">Вопрос ${index + 1}</div>
+          <div class="question-text">${q.text}</div>
+          <input type="text" class="answer-input" id="answer${index}" maxlength="1" data-index="${index}">
+        `;
+        container.appendChild(questionDiv);
+
+        const input = questionDiv.querySelector('input');
+        input.addEventListener('input', (e) => {
+          userAnswers[index] = e.target.value.toLowerCase();
+        });
+      });
+
+      document.getElementById('result').classList.remove('active');
+      document.getElementById('checkBtn').disabled = false;
+    }
+
+    function checkAnswers() {
+      let correct = 0;
+
+      testQuestions.forEach((q, index) => {
+        const input = document.getElementById(`answer${index}`);
+        if (userAnswers[index] === q.answer) {
+          correct++;
+          input.classList.add('correct');
+          input.classList.remove('incorrect');
+        } else {
+          input.classList.add('incorrect');
+          input.classList.remove('correct');
+        }
+        input.disabled = true;
+      });
+
+      const resultDiv = document.getElementById('result');
+      const resultText = document.getElementById('resultText');
+      resultText.textContent = `Правильных ответов: ${correct} из ${testQuestions.length}`;
+      resultDiv.classList.add('active');
+
+      document.getElementById('checkBtn').disabled = true;
+
+      if (correct === testQuestions.length) {
+        showCongratulation();
+      }
+    }
+
+    function showCongratulation() {
+      const congratulation = document.getElementById('congratulation');
+      congratulation.classList.add('active');
+
+      for (let i = 0; i < 100; i++) {
+        setTimeout(() => {
+          createConfetti();
+        }, i * 30);
+      }
+
+      setTimeout(() => {
+        congratulation.classList.remove('active');
+      }, 3000);
+    }
+
+    function createConfetti() {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = Math.random() * 100 + '%';
+      confetti.style.top = '-10px';
+      confetti.style.background = ['#f093fb', '#f5576c', '#4caf50', '#667eea', '#ffd700'][Math.floor(Math.random() * 5)];
+      confetti.style.width = Math.random() * 10 + 5 + 'px';
+      confetti.style.height = confetti.style.width;
+      document.body.appendChild(confetti);
+
+      setTimeout(() => {
+        confetti.remove();
+      }, 3000);
+    }
+
+    function backToMain() {
+      document.getElementById('testContainer').classList.remove('active');
+      document.getElementById('mainScreen').style.display = 'block';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderSuffixButtons();
+      document.getElementById('testBtn').addEventListener('click', showTest);
+      document.getElementById('checkBtn').addEventListener('click', checkAnswers);
+      document.getElementById('backBtn').addEventListener('click', backToMain);
+      document.getElementById('modal').addEventListener('click', (e) => {
+        if (e.target.id === 'modal') {
+          closeCard();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

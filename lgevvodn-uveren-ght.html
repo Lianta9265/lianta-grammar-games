@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Космический доббль — лжевводные</title>
+  <style>
+    :root{
+      --bg1:#061022;
+      --bg2:#070a1a;
+      --neonA:#6ee7ff;
+      --neonB:#ff6ef7;
+      --neonC:#a78bfa;
+      --text:#f6fbff;
+      --muted:rgba(246,251,255,.72);
+      --card:rgba(255,255,255,.06);
+      --stroke:rgba(255,255,255,.16);
+      --good:#66ffcc;
+      --bad:#ff6b9a;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      color:var(--text);
+      overflow:hidden;
+      background:
+        linear-gradient(rgba(6,16,34,0.55), rgba(6,16,34,0.55)),
+        url('https://i.postimg.cc/B6ZLvCqj/9ae7f1f7-gemini.jpg') center / cover no-repeat;
+    }
+
+    /* Starfield */
+    .stars, .stars::before, .stars::after{
+      position:absolute; inset:0;
+      content:"";
+      pointer-events:none;
+      background-image:
+        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,.6) 50%, transparent 52%),
+        radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,.4) 50%, transparent 52%),
+        radial-gradient(1px 1px at 70% 30%, rgba(255,255,255,.5) 50%, transparent 52%),
+        radial-gradient(1px 1px at 85% 65%, rgba(255,255,255,.35) 50%, transparent 52%),
+        radial-gradient(1px 1px at 55% 55%, rgba(255,255,255,.45) 50%, transparent 52%);
+      opacity:.25;
+      animation: drift 30s linear infinite;
+    }
+    .stars::before{
+      opacity:.18;
+      transform: translateY(-6px) translateX(8px) scale(1.2);
+      animation-duration: 50s;
+    }
+    .stars::after{
+      opacity:.12;
+      transform: translateY(6px) translateX(-10px) scale(1.4);
+      animation-duration: 70s;
+    }
+
+    .twinkle{
+      position:absolute; inset:0;
+      pointer-events:none;
+      background-image:
+        radial-gradient(1.5px 1.5px at 15% 25%, rgba(255,255,255,.6) 50%, transparent 55%),
+        radial-gradient(1.2px 1.2px at 40% 60%, rgba(255,255,255,.5) 50%, transparent 55%),
+        radial-gradient(1.4px 1.4px at 65% 35%, rgba(255,255,255,.55) 50%, transparent 55%),
+        radial-gradient(1.1px 1.1px at 80% 70%, rgba(255,255,255,.45) 50%, transparent 55%);
+      opacity:.0;
+      animation: twinkle 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes drift{
+      from{ transform: translateY(0) translateX(0); }
+      to{ transform: translateY(14px) translateX(-10px); }
+    }
+
+    @keyframes twinkle{
+      from{ opacity:0.05; }
+      to{ opacity:0.22; }
+    }
+    }
+      to{ transform: translateY(18px) translateX(-12px); }
+    }
+
+    .app{
+      position:relative;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      padding:16px 16px 18px;
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border-radius:16px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.25), 0 16px 40px rgba(0,0,0,.35);
+    }
+
+    .title{
+      display:flex; flex-direction:column; gap:2px;
+      min-width: 220px;
+    }
+    .title h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.3px;
+      text-shadow: 0 0 14px rgba(110,231,255,.25);
+      font-weight:800;
+    }
+    .title .sub{
+      font-size:12.5px;
+      color:var(--muted);
+    }
+
+    .hud{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 0 18px rgba(110,231,255,.12);
+      user-select:none;
+      white-space:nowrap;
+    }
+    .pill strong{
+      font-size:14px;
+      letter-spacing:.3px;
+    }
+    .pill span{
+      font-size:13px; color:var(--muted);
+    }
+
+    .btn{
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:999px;
+      font-weight:700;
+      letter-spacing:.2px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.28);
+      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.08); }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+
+    .btn.bad{
+      border-color: rgba(255,107,154,.35);
+      box-shadow: 0 10px 30px rgba(0,0,0,.28), 0 0 22px rgba(255,107,154,.12);
+    }
+
+    .arena{
+      flex:1;
+      display:grid;
+      grid-template-columns: 1fr 12px 1fr;
+      gap:14px;
+      min-height:0;
+    }
+
+    .divider{
+      border-radius:999px;
+      background: linear-gradient(180deg, rgba(110,231,255,.55), rgba(255,110,247,.25));
+      box-shadow: 0 0 22px rgba(110,231,255,.20), 0 0 40px rgba(255,110,247,.12);
+      opacity:.8;
+    }
+
+    .sector{
+      position:relative;
+      border:1px solid var(--stroke);
+      border-radius:18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.25), 0 18px 46px rgba(0,0,0,.35);
+      overflow:hidden;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .sector::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(500px 220px at 10% 10%, rgba(110,231,255,.18), transparent 60%),
+        radial-gradient(500px 220px at 90% 20%, rgba(255,110,247,.14), transparent 62%),
+        radial-gradient(460px 260px at 50% 90%, rgba(167,139,250,.12), transparent 60%);
+      pointer-events:none;
+      opacity:.9;
+    }
+
+    .sector-head{
+      position:relative;
+      padding:12px 14px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .sector-title{
+      font-weight:900;
+      letter-spacing:.6px;
+      font-size:13px;
+      text-transform:uppercase;
+      color: rgba(246,251,255,.92);
+      text-shadow: 0 0 18px rgba(110,231,255,.22);
+    }
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .ufo-grid{
+      position:relative;
+      flex:1;
+      min-height:0;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:20px;
+      padding:22px;
+      align-content:center;
+      justify-items:stretch;
+    }
+    /* 5 items => last spans 2 columns */
+    .ufo-grid .ufo:nth-child(5){ grid-column: 1 / span 2; }
+
+    .ufo{
+      position:relative;
+      border:none;
+      cursor:pointer;
+      padding:48px 60px 46px; /* +1.5x */
+      min-height:180px;      /* +1.5x */
+      border-radius:999px;
+      color:var(--text);
+      background:
+        url('https://i.postimg.cc/gjT6Q6bn/nlo.png') center / contain no-repeat,
+        linear-gradient(180deg, rgba(110,231,255,.18), rgba(255,255,255,.08));
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.22) inset,
+        0 22px 56px rgba(0,0,0,.40),
+        0 0 40px rgba(110,231,255,.28);
+      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+      user-select:none;
+      overflow:hidden;
+      text-align:center;
+    }
+    .ufo::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        linear-gradient(90deg, rgba(110,231,255,.0), rgba(110,231,255,.45), rgba(255,110,247,.35), rgba(110,231,255,0));
+      opacity:.35;
+      transform: translateX(-55%);
+      filter: blur(6px);
+      transition: transform .35s ease, opacity .35s ease;
+      pointer-events:none;
+    }
+    .ufo:hover{
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.26) inset,
+        0 18px 36px rgba(0,0,0,.34),
+        0 0 26px rgba(255,110,247,.16),
+        0 0 28px rgba(110,231,255,.18);
+    }
+    .ufo:hover::before{
+      transform: translateX(35%);
+      opacity:.55;
+    }
+    .ufo:active{ transform: translateY(0px) scale(.99); }
+
+    .ufo-text{
+      font-weight:950;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+      font-size:18px; /* уменьшено ~в 1.5 раза */
+      line-height:1.15;
+      color:#fafdff;
+      /* ТЁМНО-СИНЯЯ НЕОНОВАЯ ОБВОДКА (МАКСИМАЛЬНЫЙ КОНТРАСТ, БЕРЕЖНО ДЛЯ ГЛАЗ) */
+      -webkit-text-stroke: 1.4px rgba(20,35,90,.95);
+      text-shadow:
+        0 0 6px rgba(90,140,255,.85),
+        0 0 14px rgba(90,140,255,.55),
+        0 0 22px rgba(40,80,180,.45),
+        0 2px 0 rgba(0,0,0,.45);
+      word-break: break-word;
+    }
+    .ufo-text.small{ font-size:15px; -webkit-text-stroke: 1.2px rgba(20,35,90,.95); }
+    .ufo-text.tiny{ font-size:13px; -webkit-text-stroke: 1.1px rgba(20,35,90,.95); }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform: translateX(-50%);
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.32);
+      backdrop-filter: blur(10px);
+      color: rgba(246,251,255,.92);
+      font-size:13px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.45), 0 0 22px rgba(110,231,255,.12);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+
+    .shake{ animation: shake .28s ease; }
+    @keyframes shake{
+      0%{ transform: translateX(0); }
+      20%{ transform: translateX(-6px); }
+      40%{ transform: translateX(6px); }
+      60%{ transform: translateX(-4px); }
+      80%{ transform: translateX(4px); }
+      100%{ transform: translateX(0); }
+    }
+
+    .flash{
+      animation: flash .35s ease;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.28) inset,
+        0 0 30px rgba(102,255,204,.25),
+        0 0 34px rgba(110,231,255,.22),
+        0 18px 36px rgba(0,0,0,.34);
+    }
+    @keyframes flash{
+      0%{ filter: brightness(1.0); }
+      50%{ filter: brightness(1.25); }
+      100%{ filter: brightness(1.0); }
+    }
+
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(8px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:50;
+    }
+    .overlay.show{ display:flex; }
+
+    .modal{
+      width:min(640px, 100%);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      box-shadow: 0 20px 60px rgba(0,0,0,.55), 0 0 30px rgba(110,231,255,.12);
+      padding:16px;
+      text-align:center;
+      position:relative;
+    }
+    .modal h2{
+      margin:8px 0 6px;
+      font-size:20px;
+      letter-spacing:.3px;
+      font-weight:950;
+      text-shadow: 0 0 18px rgba(110,231,255,.22);
+    }
+    .modal p{ margin:0 0 14px; color:var(--muted); }
+    .modal .row{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .results{
+      margin:12px auto 0;
+      width:min(560px, 100%);
+      text-align:left;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+    }
+    .results h3{
+      margin:0 0 8px;
+      font-size:13px;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+      color: rgba(246,251,255,.88);
+    }
+    .results .line{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      padding:6px 8px;
+      border-radius:10px;
+    }
+    .results .line:nth-child(even){ background: rgba(255,255,255,.05); }
+    .results .w{ font-weight:900; letter-spacing:.4px; }
+    .results .c{ color: rgba(246,251,255,.80); }
+
+    .progress{
+      width: 220px;
+      height: 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      overflow:hidden;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.18);
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(110,231,255,.9), rgba(255,110,247,.7), rgba(167,139,250,.75));
+      box-shadow: 0 0 16px rgba(110,231,255,.18);
+      transition: width .18s ease;
+    }
+
+    @media (max-width: 860px){
+      body{ overflow:auto; }
+      .arena{ grid-template-columns: 1fr; }
+      .divider{ display:none; }
+      .ufo-grid{ grid-template-columns: 1fr; }
+      .ufo-grid .ufo:nth-child(5){ grid-column:auto; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="stars" aria-hidden="true"></div>
+  <div class="twinkle" aria-hidden="true"></div>
+
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>Космический доббль</h1>
+        <div class="sub">Найди слово, которое совпадает в обоих полушариях 🛸</div>
+      </div>
+
+      <div class="hud">
+        <div class="pill" title="Прогресс">
+          <strong id="scoreText">НАЙДЕНО: 0 / 18</strong>
+          <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+        </div>
+
+        <div class="pill" title="Ошибки">
+          <strong id="mistakesText">ОШИБКИ: 0</strong>
+          <span>штраф −1</span>
+        </div>
+
+        <button class="btn" id="restartBtn" type="button">🔁 Новая игра</button>
+      </div>
+    </header>
+
+    <main class="arena" role="main" aria-label="Игровое поле">
+      <section class="sector" aria-label="Левое полушарие">
+        <div class="sector-head">
+          <div class="sector-title">Сектор Альфа</div>
+          <div class="hint">кликни по совпадающему НЛО</div>
+        </div>
+        <div class="ufo-grid" id="leftGrid"></div>
+      </section>
+
+      <div class="divider" aria-hidden="true"></div>
+
+      <section class="sector" aria-label="Правое полушарие">
+        <div class="sector-head">
+          <div class="sector-title">Сектор Бета</div>
+          <div class="hint">совпадает только одно слово</div>
+        </div>
+        <div class="ufo-grid" id="rightGrid"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Финал">
+    <div class="modal">
+      <h2>Миссия выполнена! ✨</h2>
+      <p id="finalLine">Ты распознал все лжевводные слова и собрал полный космический комплект.</p>
+
+      <div class="results" id="resultsBox" style="display:none;">
+        <h3>Журнал ошибок</h3>
+        <div id="resultsList"></div>
+      </div>
+
+      <div class="row">
+        <button class="btn" id="playAgainBtn" type="button">🚀 Сыграть ещё раз</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ====== Данные ======
+    const BASE_WORDS = [
+      "ЕДВА ЛИ",
+      "ВРЯД ЛИ",
+      "ЯКОБЫ",
+      "ВРОДЕ",
+      "АВОСЬ",
+      "НЕБОСЬ",
+      "ПРИМЕРНО",
+      "ПО ВОЗМОЖНОСТИ",
+      "КАК БУДТО",
+      "БОЛЕЕ ИЛИ МЕНЕЕ",
+      "ОБЯЗАТЕЛЬНО",
+      "НЕПРЕМЕННО",
+      "ОДНОЗНАЧНО",
+      "РЕШИТЕЛЬНО",
+      "НАВЕРНЯКА",
+      "ПОИСТИНЕ",
+      "ЯВНО",
+      "ПРИБЛИЗИТЕЛЬНО"
+    ];
+
+    const TOTAL = 18;
+    const UFO_PER_SIDE = 5;
+    const PENALTY_ENABLED = true;   // штраф за ошибку
+    const PENALTY_POINTS = 1;       // −1 за каждый неверный клик
+
+    // ====== Утилиты ======
+    function shuffle(arr){
+      const a = arr.slice();
+      for(let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i],a[j]]=[a[j],a[i]];
+      }
+      return a;
+    }
+
+    function sampleDistinct(pool, n, excludeSet){
+      const candidates = pool.filter(x => !excludeSet.has(x));
+      if(candidates.length < n) throw new Error("Недостаточно слов для выборки");
+      const picked = [];
+      const used = new Set();
+      while(picked.length < n){
+        const w = candidates[Math.floor(Math.random()*candidates.length)];
+        if(!used.has(w)){
+          used.add(w);
+          picked.push(w);
+        }
+      }
+      return picked;
+    }
+
+    function textSizeClass(word){
+      const len = word.length;
+      if(len >= 18) return "tiny";
+      if(len >= 14) return "small";
+      return "";
+    }
+
+    // ====== Состояние игры ======
+    let sessionWords = [];
+    let roundIndex = 0;       // 0..17
+    let score = 0;
+    let mistakes = 0;
+    let currentTarget = "";
+    let mistakesMap = new Map(); // word -> count
+
+    const leftGrid = document.getElementById("leftGrid");
+    const rightGrid = document.getElementById("rightGrid");
+    const scoreText = document.getElementById("scoreText");
+    const mistakesText = document.getElementById("mistakesText");
+    const bar = document.getElementById("bar");
+    const toast = document.getElementById("toast");
+    const overlay = document.getElementById("overlay");
+    const finalLine = document.getElementById("finalLine");
+    const resultsBox = document.getElementById("resultsBox");
+    const resultsList = document.getElementById("resultsList");
+
+    document.getElementById("restartBtn").addEventListener("click", newGame);
+    document.getElementById("playAgainBtn").addEventListener("click", newGame);
+
+    // ====== Рендер ======
+    function renderSide(gridEl, words){
+      gridEl.innerHTML = "";
+      words.forEach(word => {
+        const btn = document.createElement("button");
+        btn.className = "ufo";
+        btn.type = "button";
+        btn.setAttribute("data-word", word);
+        btn.setAttribute("aria-label", "НЛО со словом " + word);
+
+        const span = document.createElement("div");
+        const cls = textSizeClass(word);
+        span.className = "ufo-text" + (cls ? (" " + cls) : "");
+        span.textContent = word;
+
+        btn.appendChild(span);
+        btn.addEventListener("click", () => onPick(btn, word));
+
+        gridEl.appendChild(btn);
+      });
+    }
+
+    function updateHUD(){
+      scoreText.textContent = `НАЙДЕНО: ${score} / ${TOTAL}`;
+      mistakesText.textContent = `ОШИБКИ: ${mistakes}`;
+      bar.style.width = (Math.min(score, TOTAL) / TOTAL * 100) + "%";
+    }
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.remove("show"), 900);
+    }
+
+    // ====== Логика раунда ======
+    function nextRound(){
+      if(roundIndex >= TOTAL){
+        finish();
+        return;
+      }
+
+      currentTarget = sessionWords[roundIndex];
+
+      // 4 + 4 уникальных "дополнительных" слова, чтобы совпадение было ровно одно
+      const pool = sessionWords;
+      const exclude = new Set([currentTarget]);
+
+      const leftFill = sampleDistinct(pool, UFO_PER_SIDE - 1, exclude);
+      leftFill.forEach(w => exclude.add(w));
+
+      const rightFill = sampleDistinct(pool, UFO_PER_SIDE - 1, exclude);
+
+      const leftWords = shuffle([currentTarget, ...leftFill]);
+      const rightWords = shuffle([currentTarget, ...rightFill]);
+
+      renderSide(leftGrid, leftWords);
+      renderSide(rightGrid, rightWords);
+
+      pulseGrids();
+    }
+
+    function pulseGrids(){
+      [leftGrid, rightGrid].forEach(g => {
+        g.classList.remove("flash");
+        void g.offsetWidth;
+        g.classList.add("flash");
+        setTimeout(()=>g.classList.remove("flash"), 360);
+      });
+    }
+
+    function recordMistake(word){
+      mistakes++;
+      mistakesMap.set(word, (mistakesMap.get(word) || 0) + 1);
+    }
+
+    function applyPenalty(){
+      if(!PENALTY_ENABLED) return;
+      score = Math.max(0, score - PENALTY_POINTS);
+    }
+
+    function onPick(btn, word){
+      if(overlay.classList.contains("show")) return;
+
+      if(word === currentTarget){
+        score++;
+        roundIndex++;
+        updateHUD();
+        btn.classList.add("flash");
+        showToast("✅ Совпало! +1");
+        setTimeout(nextRound, 220);
+      } else {
+        recordMistake(word);
+        applyPenalty();
+        updateHUD();
+
+        btn.classList.remove("shake");
+        void btn.offsetWidth;
+        btn.classList.add("shake");
+
+        showToast(PENALTY_ENABLED ? "❌ Ошибка! −1 (счёт не ниже 0)" : "❌ Не это. Ищи совпадение!");
+      }
+    }
+
+    function finish(){
+      // финальный текст
+      finalLine.textContent = `Готово: 18/18. Итоговый счёт: ${score}. Ошибок: ${mistakes}.`;
+
+      // журнал ошибок
+      const entries = Array.from(mistakesMap.entries()).sort((a,b)=>b[1]-a[1]);
+      if(entries.length){
+        resultsBox.style.display = "block";
+        resultsList.innerHTML = "";
+        entries.forEach(([w,c]) => {
+          const row = document.createElement("div");
+          row.className = "line";
+          row.innerHTML = `<div class="w">${w}</div><div class="c">× ${c}</div>`;
+          resultsList.appendChild(row);
+        });
+      } else {
+        resultsBox.style.display = "none";
+      }
+
+      overlay.classList.add("show");
+      showToast("🎉 Миссия завершена!");
+    }
+
+    // ====== Старт/рестарт ======
+    function newGame(){
+      overlay.classList.remove("show");
+      score = 0;
+      mistakes = 0;
+      mistakesMap = new Map();
+      roundIndex = 0;
+
+      // каждый раз — новый порядок целей (каждое слово ровно один раз будет совпадением)
+      sessionWords = shuffle(BASE_WORDS);
+
+      updateHUD();
+      nextRound();
+    }
+
+    // автозапуск
+    newGame();
+  </script>
+</body>
+</html>

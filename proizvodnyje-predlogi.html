@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра с лягушками</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #4a7c59 url('https://i.postimg.cc/c45ZdztY/1091e32f-gemini.jpg') no-repeat center center;
+            background-size: cover;
+            font-family: Arial, sans-serif;
+            width: 100%;
+            height: 100vh;
+        }
+        #game-root {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        #start-button {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            font-size: 18px;
+            background: rgba(3, 107, 8, 0.9);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 100;
+        }
+        .score {
+            position: absolute;
+            top: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 100;
+        }
+        #score-correct {
+            left: 20px;
+            color: green;
+        }
+        #score-incorrect {
+            right: 20px;
+            color: red;
+        }
+        .frog-container {
+            position: absolute;
+            width: 180px;
+            height: 135px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .frog {
+            width: 180px;
+            height: 135px;
+            cursor: pointer;
+            transition: transform 0.5s ease;
+            transform-origin: bottom center;
+        }
+        .frog img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .frog.growing {
+            transform: scale(1.3) rotate(10deg);
+            animation: bounce 0.5s forwards;
+        }
+        .frog.disappearing {
+            opacity: 0;
+            animation: disappear 0.8s forwards;
+        }
+        @keyframes bounce {
+            0% { transform: scale(1) translateY(0); }
+            50% { transform: scale(1.2) translateY(-20px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+        @keyframes disappear {
+            0% { opacity: 1; transform: scale(1.3) translateY(0); }
+            100% { opacity: 0; transform: scale(0); }
+        }
+
+        /* ВСПЛЫВАЮЩЕЕ ОКНО — БОЛЬШЕ И ВЫШЕ */
+        .text-box {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(3, 107, 8, 0.92);
+            color: white;
+            padding: 35px 40px;
+            border-radius: 25px;
+            font-size: 32px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 150;
+            min-width: 500px;
+            max-width: 85%;
+            box-shadow: 0 0 35px rgba(0,0,0,0.45);
+        }
+        .text-box.show {
+            opacity: 1;
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-top: 25px;
+        }
+        .option {
+            padding: 18px 22px;
+            background: #fff;
+            color: rgba(3, 107, 8, 0.9);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 26px;
+        }
+        .option:hover {
+            background: #e8f5e9;
+        }
+        .option.incorrect {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+
+        #end-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 24px 24px 18px;
+            border-radius: 18px;
+            text-align: center;
+            font-size: 18px;
+            display: none;
+            z-index: 200;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            max-width: 80%;
+        }
+        .end-button {
+            padding: 10px 20px;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 12px;
+            font-size: 16px;
+        }
+        .errors-button {
+            background: #f9a825;
+            margin-right: 8px;
+        }
+        .training-button {
+            background: #1976d2;
+            margin-right: 8px;
+        }
+        #errors-list {
+            margin-top: 14px;
+            text-align: left;
+            font-size: 16px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        #errors-list p {
+            margin: 0 0 6px;
+            font-weight: bold;
+        }
+        #errors-list ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .error-message {
+            color: #ffeb3b;
+            font-size: 18px;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-root">
+        <audio id="quack-sound" src="https://digipad.s3.sbg.io.cloud.ovh.net/735495/dddd-ddndnddd_ws3y4a5j0i.mp3" preload="auto"></audio>
+        <button id="start-button">Начать игру</button>
+        <div id="score-correct" class="score">Правильные: 0</div>
+        <div id="score-incorrect" class="score">Неправильные: 0</div>
+
+        <div id="end-message">
+            <div id="final-score"></div>
+            <button id="show-errors" class="end-button errors-button">Показать ошибки</button>
+            <button id="training-button" class="end-button training-button">Работа над ошибками</button>
+            <button id="end-button" class="end-button">Играть снова</button>
+            <div id="errors-list"></div>
+        </div>
+    </div>
+
+    <script>
+        function createElement(tag, className, innerHTML) {
+            const element = document.createElement(tag);
+            if (className) element.className = className;
+            if (innerHTML) element.innerHTML = innerHTML;
+            return element;
+        }
+
+        const imageUrl = 'https://wdesk.ru/_ph/147/1/821529003.jpg?1752895239';
+
+        // фразы с пропусками — для вопросов
+        const words = [
+            '(в)течени_ часа',          // 0
+            '(в)следстви_ засухи',      // 1
+            '(на)подоби_ болотца',      // 2
+            '(на)счёт поведения в гостях', // 3
+            '(в)продолжени_ часа',      // 4
+            '(в)виду миграции комаров', // 5
+            'что-то (в)род_ кувшинки',  // 6
+            '(в)заключени_ концерта',   // 7
+            '(на)встречу друг другу',   // 8
+            '(в)вид_ пюрешки',          // 9
+            '(на)протяжени_ игры'       // 10
+        ];
+
+        const correctAnswers = [
+            'раздельно, е',  // 0
+            'слитно, е',     // 1
+            'слитно, е',     // 2
+            'слитно',        // 3
+            'раздельно, е',  // 4
+            'слитно',        // 5
+            'слитно, е',     // 6
+            'раздельно, е',  // 7
+            'слитно',        // 8
+            'раздельно, е',  // 9
+            'раздельно, и'   // 10
+        ];
+
+        const allAnswers = [
+            ['раздельно, е', 'слитно, е', 'раздельно, и', 'слитно, и'], // 0
+            ['раздельно, е', 'слитно, е', 'раздельно, и', 'слитно, и'], // 1
+            ['раздельно, е', 'слитно, е', 'раздельно, и', 'слитно, и'], // 2
+            ['слитно', 'раздельно'],                                   // 3
+            ['раздельно, е', 'слитно, е', 'раздельно, и', 'слитно, и'], // 4
+            ['слитно', 'раздельно'],                                   // 5
+            ['раздельно, е', 'слитно, е', 'раздельно, и', 'слитно, и'], // 6
+            ['раздельно, е', 'слитно, е', 'раздельно, и', 'слитно, и'], // 7
+            ['слитно', 'раздельно'],                                   // 8
+            ['раздельно, е', 'слитно, е', 'раздельно, и', 'слитно, и'], // 9
+            ['раздельно, е', 'слитно, е', 'раздельно, и', 'слитно, и']  // 10
+        ];
+
+        // правильные формы для блока "ЗАПОМНИ:" — в том же порядке
+        const correctForms = [
+            "В ТЕЧЕНИЕ часа",               // 0
+            "ВСЛЕДСТВИЕ засухи",            // 1
+            "НАПОДОБИЕ болотца",            // 2
+            "НАСЧЁТ поведения в гостях",    // 3
+            "В ПРОДОЛЖЕНИЕ часа",           // 4
+            "ВВИДУ миграции комаров",       // 5
+            "что-то ВРОДЕ кувшинки",        // 6
+            "В ЗАКЛЮЧЕНИЕ концерта",        // 7
+            "НАВСТРЕЧУ друг другу",         // 8
+            "В ВИДЕ пюрешки",               // 9
+            "НА ПРОТЯЖЕНИИ игры"            // 10
+        ];
+
+        const gameRoot = document.getElementById('game-root');
+        const quackSound = document.getElementById('quack-sound');
+        const startButton = document.getElementById('start-button');
+        const endMessage = document.getElementById('end-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const showErrorsBtn = document.getElementById('show-errors');
+        const trainingButton = document.getElementById('training-button');
+        const endButton = document.getElementById('end-button');
+        const errorsListEl = document.getElementById('errors-list');
+
+        let containers = [];
+        const speed = 0.25;
+        let gameStarted = false;
+        let animationStarted = false;
+        let correctScore = 0;
+        let incorrectScore = 0;
+        let mistakeIndices = new Set();      // индексы выражений, где были ошибки
+        let activeQuestionIndices = [];      // индексы заданий в текущем раунде
+        let isTrainingMode = false;
+
+        // настроить активные вопросы: все
+        function useAllQuestions() {
+            activeQuestionIndices = [];
+            for (let i = 0; i < words.length; i++) {
+                activeQuestionIndices.push(i);
+            }
+        }
+
+        // активные вопросы: только ошибки
+        function useMistakeQuestions() {
+            activeQuestionIndices = Array.from(mistakeIndices);
+        }
+
+        // строим шеренгу по activeQuestionIndices
+        function createFrogs() {
+            containers.forEach(c => {
+                if (c.container && c.container.parentNode) {
+                    c.container.parentNode.removeChild(c.container);
+                }
+            });
+            containers = [];
+
+            const count = activeQuestionIndices.length;
+            if (count === 0) return;
+
+            const leftStart = 5;
+            const leftEnd = 95;
+            const step = count > 1 ? (leftEnd - leftStart) / (count - 1) : 0;
+            const rowTop = 40; // середина поля
+
+            activeQuestionIndices.forEach((qIndex, idx) => {
+                const container = createElement('div', 'frog-container');
+
+                const left = leftStart + step * idx;
+                container.style.left = left + '%';
+                container.style.top  = rowTop + '%';
+
+                const frog = createElement('div', 'frog');
+                const img = createElement('img');
+                img.src = imageUrl;
+                img.alt = "Лягушка";
+                frog.appendChild(img);
+
+                container.appendChild(frog);
+                gameRoot.appendChild(container);
+
+                const frogObj = {
+                    container,
+                    frog,
+                    velocity: { x: 0, y: 0 },
+                    clicked: false,
+                    removed: false,
+                    questionIndex: qIndex   // индекс задания в общих массивах
+                };
+
+                containers.push(frogObj);
+
+                frog.addEventListener('click', () => handleFrogClick(idx));
+            });
+        }
+
+        // на "Начать игру" — разбегаются по полю
+        function startGame() {
+            if (animationStarted || containers.length === 0) return;
+
+            gameStarted = true;
+            animationStarted = true;
+            startButton.style.display = 'none';
+
+            containers.forEach(obj => {
+                if (!obj.removed) {
+                    const randomLeft = 5 + Math.random() * 90;  // 5–95%
+                    const randomTop  = 10 + Math.random() * 75; // 10–85%
+
+                    obj.container.style.left = randomLeft + '%';
+                    obj.container.style.top  = randomTop  + '%';
+
+                    const angle = Math.random() * 2 * Math.PI;
+                    obj.velocity = {
+                        x: Math.cos(angle) * speed,
+                        y: Math.sin(angle) * speed
+                    };
+                }
+            });
+
+            animate();
+        }
+
+        function handleFrogClick(containerIdx) {
+            const frogObj = containers[containerIdx];
+            if (!gameStarted || frogObj.clicked || frogObj.removed) return;
+
+            const qIndex = frogObj.questionIndex;
+
+            try {
+                quackSound.currentTime = 0;
+                quackSound.play().catch(() => {});
+            } catch (e) {}
+
+            frogObj.clicked = true;
+            frogObj.velocity = { x: 0, y: 0 };
+
+            frogObj.frog.classList.add('growing');
+
+            setTimeout(() => {
+                frogObj.frog.classList.remove('growing');
+                frogObj.frog.classList.add('disappearing');
+
+                const textBox = createElement('div', 'text-box');
+                let optionsHTML = '';
+                allAnswers[qIndex].forEach(answer => {
+                    optionsHTML += `<button class="option" data-answer="${answer}">${answer}</button>`;
+                });
+
+                const errorId = `error-${containerIdx}`;
+                textBox.innerHTML = `
+                    <div>${words[qIndex]}</div>
+                    <div class="options-container">
+                        ${optionsHTML}
+                    </div>
+                    <div class="error-message" id="${errorId}">Неправильный ответ! Попробуйте снова.</div>
+                `;
+
+                gameRoot.appendChild(textBox);
+
+                setTimeout(() => {
+                    textBox.classList.add('show');
+                }, 10);
+
+                textBox.querySelectorAll('.option').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const selectedAnswer = button.dataset.answer;
+                        if (selectedAnswer === correctAnswers[qIndex]) {
+                            // правильный ответ
+                            correctScore++;
+                            document.getElementById('score-correct').textContent =
+                                `Правильные: ${correctScore}`;
+
+                            const errorMessage = document.getElementById(errorId);
+                            if (errorMessage) {
+                                errorMessage.style.display = 'none';
+                            }
+
+                            textBox.classList.remove('show');
+                            setTimeout(() => {
+                                if (textBox.parentNode) {
+                                    textBox.parentNode.removeChild(textBox);
+                                }
+                                if (frogObj.container.parentNode) {
+                                    frogObj.container.parentNode.removeChild(frogObj.container);
+                                }
+                                frogObj.removed = true;
+                                checkGameOver();
+                            }, 300);
+                        } else {
+                            // неправильный ответ
+                            incorrectScore++;
+                            document.getElementById('score-incorrect').textContent =
+                                `Неправильные: ${incorrectScore}`;
+
+                            // запоминаем исходный индекс задания
+                            mistakeIndices.add(qIndex);
+
+                            const errorMessage = document.getElementById(errorId);
+                            if (errorMessage) {
+                                errorMessage.style.display = 'block';
+                            }
+
+                            button.classList.add('incorrect');
+                            button.style.animation = 'shake 0.5s';
+                            setTimeout(() => {
+                                button.style.animation = '';
+                            }, 500);
+                        }
+                    });
+                });
+            }, 500);
+        }
+
+        // анимация шевеления кнопки при ошибке
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes shake {
+                0% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                50% { transform: translateX(5px); }
+                75% { transform: translateX(-5px); }
+                100% { transform: translateX(0); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        function animate() {
+            if (!animationStarted) return;
+
+            let moving = false;
+
+            containers.forEach(obj => {
+                const { container, velocity, removed } = obj;
+                if (removed || (velocity.x === 0 && velocity.y === 0)) return;
+
+                moving = true;
+
+                let left = parseFloat(container.style.left);
+                let top  = parseFloat(container.style.top);
+
+                left += velocity.x;
+                top  += velocity.y;
+
+                if (left <= 2 || left >= 92) {
+                    obj.velocity.x *= -1;
+                    left = left <= 2 ? 2 : 92;
+                }
+                if (top <= 5 || top >= 88) {
+                    obj.velocity.y *= -1;
+                    top = top <= 5 ? 5 : 88;
+                }
+
+                if (Math.random() < 0.01) {
+                    const turn = (Math.random() - 0.5) * 0.3;
+                    const currentAngle = Math.atan2(obj.velocity.y, obj.velocity.x);
+                    const newAngle = currentAngle + turn;
+                    const speedMagnitude = Math.sqrt(obj.velocity.x * obj.velocity.x + obj.velocity.y * obj.velocity.y);
+                    obj.velocity.x = Math.cos(newAngle) * speedMagnitude;
+                    obj.velocity.y = Math.sin(newAngle) * speedMagnitude;
+                }
+
+                container.style.left = left + '%';
+                container.style.top  = top  + '%';
+            });
+
+            if (moving) {
+                requestAnimationFrame(animate);
+            }
+        }
+
+        function checkGameOver() {
+            const allRemoved = containers.every(container => container.removed);
+            if (allRemoved) {
+                showEndMessage();
+            }
+        }
+
+        function showEndMessage() {
+            const modeText = isTrainingMode
+                ? 'Тренировка по ошибкам завершена!'
+                : 'Вы переместили всех лягушек на следующую страницу!';
+            finalScoreEl.innerHTML =
+                `${modeText}<br>
+                 Правильные: ${correctScore}<br>
+                 Неправильные: ${incorrectScore}`;
+            errorsListEl.innerHTML = ''; // очищаем предыдущий текст
+            endMessage.style.display = 'block';
+        }
+
+        // кнопка "Показать ошибки" — выводит ЗАПОМНИ с правильными формами
+        showErrorsBtn.addEventListener('click', () => {
+            errorsListEl.innerHTML = '';
+
+            if (mistakeIndices.size === 0) {
+                errorsListEl.innerHTML =
+                    '<p style="font-size:22px; color:green; font-weight:bold; text-align:center;">Ты не сделал ни одной ошибки — блестяще! 🐸💚</p>';
+                return;
+            }
+
+            let listHTML = `
+                <p style="
+                    font-size:26px;
+                    font-weight:bold;
+                    color:#d9534f;
+                    text-align:center;
+                    margin-bottom:12px;">
+                    ✨ ЗАПОМНИ:
+                </p>
+                <ul style="
+                    font-size:22px;
+                    line-height:1.4;
+                    font-weight:bold;
+                    color:#2e7d32;">
+            `;
+
+            mistakeIndices.forEach(qIndex => {
+                listHTML += `<li>${correctForms[qIndex]}</li>`;
+            });
+
+            listHTML += '</ul>';
+            errorsListEl.innerHTML = listHTML;
+        });
+
+        // кнопка "Работа над ошибками"
+        trainingButton.addEventListener('click', () => {
+            errorsListEl.innerHTML = '';
+
+            if (mistakeIndices.size === 0) {
+                errorsListEl.innerHTML =
+                    '<p style="font-size:20px; color:#555; font-weight:bold; text-align:center;">Сначала допусти хоть одну ошибку, чтобы было над чем работать 😉</p>';
+                return;
+            }
+
+            // запускаем тренировку только по ошибкам
+            endMessage.style.display = 'none';
+            isTrainingMode = true;
+
+            // обнуляем счётчики
+            correctScore = 0;
+            incorrectScore = 0;
+            document.getElementById('score-correct').textContent = `Правильные: ${correctScore}`;
+            document.getElementById('score-incorrect').textContent = `Неправильные: ${incorrectScore}`;
+
+            // останавливаем движение и очищаем поле
+            animationStarted = false;
+            gameStarted = false;
+            containers.forEach(c => {
+                if (c.container && c.container.parentNode) {
+                    c.container.parentNode.removeChild(c.container);
+                }
+            });
+            containers = [];
+
+            // активные вопросы — только ошибочные
+            useMistakeQuestions();
+            createFrogs();
+
+            // меняем текст кнопки старта
+            startButton.textContent = 'Начать тренировку по ошибкам';
+            startButton.style.display = 'block';
+        });
+
+        // кнопка "Играть снова" — полная новая игра
+        endButton.addEventListener('click', () => {
+            endMessage.style.display = 'none';
+            resetGame();
+        });
+
+        function resetGame() {
+            correctScore = 0;
+            incorrectScore = 0;
+            mistakeIndices = new Set();
+            document.getElementById('score-correct').textContent = `Правильные: ${correctScore}`;
+            document.getElementById('score-incorrect').textContent = `Неправильные: ${incorrectScore}`;
+            gameStarted = false;
+            animationStarted = false;
+            isTrainingMode = false;
+
+            containers.forEach(container => {
+                if (container.container && container.container.parentNode) {
+                    container.container.parentNode.removeChild(container.container);
+                }
+            });
+            containers = [];
+
+            startButton.textContent = 'Начать игру';
+            startButton.style.display = 'block';
+
+            useAllQuestions();
+            createFrogs();
+        }
+
+        startButton.addEventListener('click', startGame);
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                useAllQuestions();
+                createFrogs();
+            });
+        } else {
+            useAllQuestions();
+            createFrogs();
+        }
+    </script>
+</body>
+</html>

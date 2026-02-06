@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Словопад 7 класс — Полная версия</title>
+  <style>
+    :root{
+      --bg1:#071528; --bg2:#0b2a4a; --text: rgba(255,255,255,.95); --accent: #7dd3ff;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; font-family: sans-serif; color:var(--text); overflow:hidden; background:#000; }
+    body{ background: radial-gradient(1200px 700px at 70% 20%, rgba(125,211,255,.22), transparent 60%), linear-gradient(180deg, var(--bg1), var(--bg2)); }
+    .hud{ position:fixed; left:16px; right:16px; top:14px; display:flex; gap:12px; z-index:20; }
+    .panel{ padding:10px 14px; border-radius:16px; background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.2); backdrop-filter: blur(8px); }
+    #game{ position:fixed; inset:0; z-index:10; background-image: url('https://i.postimg.cc/T2JHgRs3/cdb525d5-nano-2K.png'); background-size: cover; background-position: center bottom; }
+    .flake{
+      position:absolute; padding:10px 18px; border-radius:999px;
+      background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3);
+      cursor:pointer; user-select:none; white-space:nowrap;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .flake:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
+    button { cursor: pointer; padding: 4px 12px; border-radius: 8px; border: 1px solid #fff; background: transparent; color: #fff; }
+  </style>
+</head>
+<body>
+  
+  <div class="hud">
+    <div class="panel">
+      <b>Словопад</b> | Ищем: <span id="target" style="color:var(--accent); font-weight:bold;">глагол</span><br>
+      ✔ <span id="right">0</span> ✖ <span id="wrong">0</span> | ⭐ <span id="score">0</span>
+    </div>
+    <div class="panel">
+      <select id="mode">
+        <option value="verb">глагол</option>
+        <option value="participle">причастие</option>
+        <option value="gerund">деепричастие</option>
+        <option value="adverb">наречие</option>
+        <option value="adjective">прилагательное</option>
+      </select>
+      <button id="toggle">Старт</button>
+      <button id="reset">Сброс</button>
+      <button id="finish">Итог</button>
+    </div>
+  </div>
+  <div id="game"></div>
+
+  <div id="final" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:30; align-items:center; justify-content:center;">
+    <div class="panel" style="text-align:center;">
+      <h2>Результат</h2>
+      <p>Правильно выбрано: <b id="fRight"></b></p>
+      <p>Ошибочных кликов: <b id="fWrong"></b></p>
+      <p>Очки: <b id="fScore"></b></p>
+      <button onclick="location.reload()">Играть снова</button>
+    </div>
+  </div>
+
+<script>
+const WORDS = [
+ // --- ТВОЙ ПЕРВЫЙ СПИСОК (ВОЗВРАЩЕН) ---
+ {text:"Красить",type:"verb"},{text:"Играть",type:"verb"},{text:"Учить",type:"verb"},{text:"Образовать",type:"verb"},{text:"Танцевать",type:"verb"},{text:"Говорить",type:"verb"},{text:"Стараться",type:"verb"},
+ {text:"Красящий",type:"participle"},{text:"Играющий",type:"participle"},{text:"Учащий",type:"participle"},{text:"Образующий",type:"participle"},{text:"Танцующий",type:"participle"},{text:"Говорящий",type:"participle"},{text:"Старающийся",type:"participle"},
+ {text:"Покрасив",type:"gerund"},{text:"Играя",type:"gerund"},{text:"Выучив",type:"gerund"},{text:"Образовав",type:"gerund"},{text:"Танцуя",type:"gerund"},{text:"Поговорив",type:"gerund"},{text:"Стараясь",type:"gerund"},
+ {text:"Красиво",type:"adverb"},{text:"Игриво",type:"adverb"},{text:"Учено",type:"adverb"},{text:"Образно",type:"adverb"},{text:"Танцевально",type:"adverb"},{text:"Говорливо",type:"adverb"},{text:"Старательно",type:"adverb"},
+ {text:"Красивый",type:"adjective"},{text:"Игровой",type:"adjective"},{text:"Учебный",type:"adjective"},{text:"Образный",type:"adjective"},{text:"Танцевальный",type:"adjective"},{text:"Разговорный",type:"adjective"},{text:"Старательный",type:"adjective"},
+
+ // --- НОВЫЙ СПИСОК (ПРИЧАСТИЯ 7 КЛАССА) ---
+ {text:"Боявшийся",type:"participle"}, {text:"Спетый",type:"participle"}, {text:"Увиденный",type:"participle"}, 
+ {text:"Значимый",type:"participle"}, {text:"Признанный",type:"participle"}, {text:"Построенный",type:"participle"},
+ {text:"Любимый",type:"participle"}, {text:"Прочитанный",type:"participle"}, {text:"Уверенный",type:"participle"},
+ {text:"Знавший",type:"participle"}, {text:"Покрашенный",type:"participle"}, {text:"Сумевший",type:"participle"},
+
+ // --- ДОПОЛНИТЕЛЬНЫЕ ФОРМЫ ДЛЯ РАЗНООБРАЗИЯ ---
+ {text:"Бояться",type:"verb"}, {text:"Видеть",type:"verb"}, {text:"Петь",type:"verb"}, {text:"Читать",type:"verb"}, {text:"Знать",type:"verb"},
+ {text:"Боясь",type:"gerund"}, {text:"Увидев",type:"gerund"}, {text:"Прочитав",type:"gerund"}, {text:"Зная",type:"gerund"}, {text:"Умея",type:"gerund"},
+ {text:"Боязливый",type:"adjective"}, {text:"Видный",type:"adjective"}, {text:"Певчий",type:"adjective"}, {text:"Читальный",type:"adjective"}, {text:"Стройный",type:"adjective"},
+ {text:"Боязливо",type:"adverb"}, {text:"Видимо",type:"adverb"}, {text:"Стройно",type:"adverb"}, {text:"Верно",type:"adverb"}
+];
+
+let running=false, right=0, wrong=0, score=0;
+const game=document.getElementById('game');
+const mode=document.getElementById('mode');
+const target=document.getElementById('target');
+const rightEl=document.getElementById('right');
+const wrongEl=document.getElementById('wrong');
+const scoreEl=document.getElementById('score');
+
+function updateHUD(){
+ target.textContent=mode.options[mode.selectedIndex].text;
+ rightEl.textContent=right; wrongEl.textContent=wrong; scoreEl.textContent=score;
+}
+
+function spawn(){
+ if(!running) return;
+ const w = WORDS[Math.floor(Math.random()*WORDS.length)];
+ const el = document.createElement('div');
+ el.className = 'flake';
+ el.textContent = w.text;
+ 
+ let x = Math.random()*(innerWidth-150), y = -50;
+ el.style.left = x + 'px';
+ el.style.top = y + 'px';
+ 
+ el.onclick = () => {
+  if(w.type === mode.value){
+    right++; score += 10;
+    el.style.background = "rgba(67, 245, 155, 0.7)"; 
+  } else {
+    wrong++; score = Math.max(0, score - 5);
+    el.style.background = "rgba(255, 77, 109, 0.7)"; 
+  }
+  updateHUD();
+  setTimeout(() => el.remove(), 150);
+ };
+ 
+ game.appendChild(el);
+ const fall = setInterval(() => {
+  if(!document.body.contains(el)){ clearInterval(fall); return; }
+  y += 1.3; 
+  el.style.top = y + 'px';
+  if(y > innerHeight){
+    el.remove(); clearInterval(fall);
+  }
+ }, 16);
+}
+
+setInterval(spawn, 800);
+
+document.getElementById('toggle').onclick = (e) => {
+    running = !running;
+    e.target.textContent = running ? "Пауза" : "Старт";
+};
+
+document.getElementById('reset').onclick = () => { location.reload(); };
+
+mode.onchange = updateHUD; updateHUD();
+
+document.getElementById('finish').onclick = () => {
+  running = false;
+  document.getElementById('fRight').textContent = right;
+  document.getElementById('fWrong').textContent = wrong;
+  document.getElementById('fScore').textContent = score;
+  document.getElementById('final').style.display = 'flex';
+};
+</script>
+</body>
+</html>

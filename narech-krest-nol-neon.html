@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📚 Наречия: тренажёр</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Courier New', monospace;
+      background: #0a0e17;
+      background-image: 
+        radial-gradient(circle at 20% 30%, rgba(20,30,60,0.05) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(10,20,40,0.07) 0%, transparent 50%);
+      text-align: center;
+      padding: 12px;
+      color: #e0e6f0;
+      overflow-x: hidden;
+      margin: 0;
+    }
+    h1 {
+      color: #ff9ff3;
+      margin: 10px 0 4px;
+      text-shadow: 0 0 10px rgba(255, 159, 243, 0.4);
+      letter-spacing: 1px;
+      font-size: 26px;
+    }
+    .subtitle {
+      color: #a29bfe;
+      margin-bottom: 10px;
+      font-size: 14px;
+      max-width: 620px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    #question-area {
+      margin: 12px auto;
+      max-width: 620px;
+      background: rgba(10, 15, 30, 0.6);
+      backdrop-filter: blur(4px);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 0 15px rgba(130, 158, 253, 0.1);
+      border: 1px solid rgba(130, 158, 253, 0.2);
+      position: relative;
+    }
+
+    #current-word {
+      font-size: 26px;
+      font-weight: bold;
+      margin: 12px 0;
+      padding: 12px 20px;
+      background: rgba(25, 30, 50, 0.7);
+      border-radius: 10px;
+      letter-spacing: 2px;
+      font-family: 'Courier New', monospace;
+      color: #f8f9fa;
+      text-shadow: 0 0 6px rgba(200, 220, 255, 0.6);
+      border: 1px solid rgba(150, 180, 255, 0.3);
+      box-shadow: 0 0 12px rgba(100, 140, 255, 0.1);
+    }
+
+    .choices {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      margin: 14px 0;
+    }
+    button.choice {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    #btn-slitno { 
+      background: rgba(46, 204, 113, 0.25);
+      color: #2ecc71;
+      border: 1px solid #27ae60;
+      text-shadow: 0 0 6px rgba(46, 204, 113, 0.7);
+    }
+    #btn-slitno:hover:not(:disabled) {
+      background: rgba(46, 204, 113, 0.4);
+      box-shadow: 0 0 14px rgba(46, 204, 113, 0.6);
+    }
+    #btn-razdelno { 
+      background: rgba(230, 126, 34, 0.25);
+      color: #e67e22;
+      border: 1px solid #d35400;
+      text-shadow: 0 0 6px rgba(230, 126, 34, 0.7);
+    }
+    #btn-razdelno:hover:not(:disabled) {
+      background: rgba(230, 126, 34, 0.4);
+      box-shadow: 0 0 14px rgba(230, 126, 34, 0.6);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      text-shadow: none;
+      box-shadow: none;
+    }
+
+    #next-btn {
+      margin: 16px 0;
+      padding: 12px 26px;
+      font-size: 16px;
+      background: rgba(91, 134, 229, 0.2);
+      color: #5b86e5;
+      border: 1px solid #4a75d4;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      text-shadow: 0 0 6px rgba(91, 134, 229, 0.7);
+      transition: all 0.3s;
+    }
+    #next-btn:hover:not(:disabled) {
+      background: rgba(91, 134, 229, 0.35);
+      box-shadow: 0 0 16px rgba(91, 134, 229, 0.6);
+    }
+
+    #status {
+      font-size: 19px;
+      font-weight: bold;
+      margin: 14px 0;
+      min-height: 26px;
+      text-shadow: 0 0 6px rgba(200, 220, 255, 0.5);
+    }
+
+    /* ——— ПАНЕЛЬ УПРАВЛЕНИЯ (Заново + Бот) ——— */
+    .control-panel {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+    }
+    .control-btn {
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    #reset {
+      background: rgba(155, 89, 182, 0.2);
+      color: #9b59b6;
+      border-color: #9b59b6;
+      text-shadow: 0 0 4px rgba(155, 89, 182, 0.6);
+    }
+    #reset:hover {
+      background: rgba(155, 89, 182, 0.3);
+      box-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
+    }
+
+    #toggle-bot {
+      background: rgba(52, 152, 219, 0.2);
+      color: #3498db;
+      border-color: #2980b9;
+      text-shadow: 0 0 4px rgba(52, 152, 219, 0.6);
+    }
+    #toggle-bot:hover {
+      background: rgba(52, 152, 219, 0.3);
+      box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+    }
+
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-gap: 4px;
+      max-width: 540px;
+      margin: 0 auto 20px;
+      padding: 6px;
+      background: rgba(5, 10, 25, 0.5);
+      border-radius: 8px;
+      box-shadow: 
+        inset 0 0 10px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(30, 80, 150, 0.1);
+    }
+
+    .cell {
+      aspect-ratio: 1 / 1;
+      background: rgba(30, 40, 70, 0.6);
+      border-radius: 6px;
+      font-size: 24px;
+      font-weight: bold;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(100, 150, 255, 0.15);
+      position: relative;
+      min-width: 68px;
+    }
+    .cell::before {
+      content: attr(data-num);
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      font-size: 11px;
+      color: #8892b0;
+      font-family: monospace;
+      opacity: 0.7;
+    }
+    .cell.x { color: #ff7675; text-shadow: 0 0 8px rgba(255, 118, 117, 0.6); }
+    .cell.o { color: #74b9ff; text-shadow: 0 0 8px rgba(116, 185, 255, 0.6); }
+    .cell.available {
+      background: rgba(40, 60, 100, 0.75);
+      border-color: rgba(120, 200, 255, 0.5);
+      box-shadow: 
+        inset 0 0 8px rgba(0, 0, 0, 0.6),
+        0 0 8px rgba(120, 200, 255, 0.45);
+    }
+    .cell:hover {
+      transform: scale(1.03);
+      z-index: 2;
+      box-shadow: 
+        inset 0 0 10px rgba(0, 0, 0, 0.5),
+        0 0 14px rgba(140, 210, 255, 0.7);
+      border-color: rgba(160, 220, 255, 0.7);
+    }
+
+    /* ——— ФИНАЛЬНЫЙ ЭКРАН ——— */
+    #final-screen {
+      display: none;
+      margin: 20px auto;
+      max-width: 560px;
+      background: rgba(10, 15, 30, 0.7);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 0 20px rgba(91, 134, 229, 0.2);
+    }
+    #score {
+      font-size: 20px;
+      margin: 16px 0;
+      line-height: 1.5;
+      text-align: left;
+      padding: 0 20px;
+    }
+    .player-score {
+      margin: 8px 0;
+      font-weight: bold;
+    }
+    .player-score.x { color: #ff7675; }
+    .player-score.o { color: #74b9ff; }
+    .total-errors { color: #f39c12; font-weight: bold; }
+
+    #show-errors-btn {
+      margin: 18px 0;
+      padding: 12px 28px;
+      font-size: 17px;
+      background: rgba(241, 196, 15, 0.2);
+      color: #f39c12;
+      border: 1px solid #f1c40f;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      text-shadow: 0 0 6px rgba(241, 196, 15, 0.6);
+    }
+    #show-errors-btn:hover {
+      background: rgba(241, 196, 15, 0.35);
+      box-shadow: 0 0 14px rgba(241, 196, 15, 0.5);
+    }
+
+    #errors-list {
+      display: none;
+      margin-top: 20px;
+      text-align: left;
+      padding: 16px;
+      background: rgba(5, 10, 25, 0.4);
+      border-radius: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .error-item {
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed rgba(150, 150, 180, 0.2);
+    }
+    .error-word { font-weight: bold; color: #ff9ff3; }
+    .error-answer { color: #e74c3c; }
+    .error-correct { color: #2ecc71; }
+
+    .pulse { animation: pulse 0.6s; }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+
+    /* Анимация бота */
+    .thinking {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background: #3498db;
+      border-radius: 50%;
+      margin: 0 2px;
+      animation: bounce 1.4s infinite ease-in-out;
+    }
+    .thinking:nth-child(2) { animation-delay: 0.2s; }
+    .thinking:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+  </style>
+</head>
+<body>
+  <h1>📚 Наречия: тренажёр</h1>
+  <p class="subtitle">49 слов — 49 клеток. В конце: счёт и список ошибок.</p>
+
+  <div id="question-area">
+    <!-- Панель управления -->
+    <div class="control-panel">
+      <button id="reset" class="control-btn">🔄 Заново</button>
+      <button id="toggle-bot" class="control-btn">🤖 С ботом</button>
+    </div>
+    
+    <div id="current-word" class="pulse">Готов(а)?</div>
+
+    <div class="choices">
+      <button id="btn-slitno" class="choice" disabled>Слитно</button>
+      <button id="btn-razdelno" class="choice" disabled>Раздельно</button>
+    </div>
+
+    <button id="next-btn">Дальше →</button>
+  </div>
+
+  <div id="status">Ходит: ❌</div>
+
+  <div id="game-board"></div>
+
+  <!-- Финальный экран -->
+  <div id="final-screen">
+    <h2>🎉 Игра завершена!</h2>
+    <div id="score"></div>
+    <button id="show-errors-btn">📋 Показать все ошибки</button>
+    <div id="errors-list"></div>
+  </div>
+
+  <script>
+    // ——— ГЕНЕРАЦИЯ ПОЛЯ ———
+    const gameBoard = document.getElementById('game-board');
+    for (let i = 1; i <= 49; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.index = i - 1;
+      cell.dataset.num = i;
+      gameBoard.appendChild(cell);
+    }
+
+    // ——— ДАННЫЕ ———
+    const WORDS = [
+      { w: "в/близи", t: "с" }, { w: "в/бок", t: "с" }, { w: "в/брод", t: "с" }, { w: "в/верх", t: "с" },
+      { w: "в/глубь", t: "с" }, { w: "в/далеке", t: "с" }, { w: "в/дали", t: "с" }, { w: "в/даль", t: "с" },
+      { w: "в/двое", t: "с" }, { w: "в/двоём", t: "с" }, { w: "в/заперти", t: "с" }, { w: "в/конец", t: "с" },
+      { w: "в/лево", t: "с" }, { w: "в/месте", t: "с" }, { w: "в/миг", t: "с" }, { w: "в/начале", t: "с" },
+      { w: "в/низ", t: "с" }, { w: "в/низу", t: "с" }, { w: "в/ничью", t: "с" }, { w: "в/нутри", t: "с" },
+      { w: "в/нутрь", t: "с" }, { w: "во/время", t: "с" }, { w: "во/всю", t: "с" }, { w: "во/едино", t: "с" },
+      { w: "во/круг", t: "с" }, { w: "во/обще", t: "с" }, { w: "в/первые", t: "с" }, { w: "в/перёд", t: "с" },
+      { w: "в/переди", t: "с" }, { w: "в/плотную", t: "с" }, { w: "в/полголоса", t: "с" }, { w: "в/полоборота", t: "с" },
+      { w: "в/полсилы", t: "с" }, { w: "в/последствии", t: "с" }, { w: "в/потьмах", t: "с" }, { w: "в/правду", t: "с" },
+      { w: "в/праве", t: "с" }, { w: "в/право", t: "с" }, { w: "в/прочем", t: "с" }, { w: "в/рассыпную", t: "с" },
+      { w: "в/растяжку", t: "с" }, { w: "в/серьёз", t: "с" }, { w: "все/цело", t: "с" }, { w: "в/скоре", t: "с" },
+      { w: "в/след", t: "с" }, { w: "в/сплошную", t: "с" }, { w: "в/тайне", t: "с" }, { w: "в/трое", t: "с" },
+      { w: "в/троём", t: "с" }, { w: "в/ширь", t: "с" },
+      { w: "на/бок", t: "с" }, { w: "на/век", t: "с" }, { w: "на/верх", t: "с" }, { w: "на/верху", t: "с" },
+      { w: "на/взничь", t: "с" }, { w: "на/всегда", t: "с" }, { w: "на/встречу", t: "с" }, { w: "на/двое", t: "с" },
+      { w: "на/едине", t: "с" }, { w: "на/завтра", t: "с" }, { w: "на/зло", t: "с" },
+      { w: "на/зубок", t: "с" }, { w: "на/изусть", t: "с" }, { w: "на/кануне", t: "с" }, { w: "на/конец", t: "с" },
+      { w: "на/лево", t: "с" }, { w: "на/оборот", t: "с" }, { w: "на/перегонки", t: "с" }, { w: "на/перекор", t: "с" },
+      { w: "на/перёд", t: "с" }, { w: "на/показ", t: "с" }, { w: "на/половину", t: "с" }, { w: "на/право", t: "с" },
+      { w: "на/против", t: "с" }, { w: "на/прямик", t: "с" }, { w: "на/равне", t: "с" }, { w: "на/распашку", t: "с" },
+      { w: "на/ружу", t: "с" }, { w: "на/сколько", t: "с" }, { w: "на/смерть", t: "с" }, { w: "на/совсем", t: "с" },
+      { w: "на/спех", t: "с" }, { w: "на/столько", t: "с" }, { w: "на/трое", t: "с" },
+      { w: "на/угад", t: "с" }, { w: "на/утёк", t: "с" }, { w: "на/утро", t: "с" },
+      { w: "до/бела", t: "с" }, { w: "до/верху", t: "с" }, { w: "до/нельзя", t: "с" }, { w: "до/суха", t: "с" },
+      { w: "до/сыта", t: "с" }, { w: "до/чиста", t: "с" },
+      { w: "за/муж", t: "с" }, { w: "за/одно", t: "с" }, { w: "за/тем", t: "с" }, { w: "за/частую", t: "с" },
+      { w: "за/чем", t: "с" },
+      { w: "к/верху", t: "с" }, { w: "к/ряду", t: "с" }, { w: "к/стати", t: "с" },
+      { w: "от/куда", t: "с" }, { w: "от/сюда", t: "с" }, { w: "от/того", t: "с" }, { w: "от/туда", t: "с" },
+      { w: "от/части", t: "с" }, { w: "от/чего", t: "с" },
+      { w: "по/ближе", t: "с" }, { w: "по/быстрее", t: "с" }, { w: "по/верху", t: "с" }, { w: "по/всюду", t: "с" },
+      { w: "по/зади", t: "с" }, { w: "по/истине", t: "с" }, { w: "по/меньше", t: "с" }, { w: "по/мимо", t: "с" },
+      { w: "по/началу", t: "с" }, { w: "по/неволе", t: "с" }, { w: "по/немногу", t: "с" }, { w: "по/одиночке", t: "с" },
+      { w: "по/ровну", t: "с" }, { w: "по/просту", t: "с" }, { w: "по/скольку", t: "с" }, { w: "по/скорее", t: "с" },
+      { w: "по/среди", t: "с" }, { w: "по/средине", t: "с" }, { w: "по/тому", t: "с" }, { w: "по/очерёдно", t: "с" },
+      { w: "по/чему", t: "с" }, { w: "по/этому", t: "с" },
+      { w: "с/боку", t: "с" }, { w: "с/верху", t: "с" }, { w: "с/зади", t: "с" }, { w: "с/лева", t: "с" },
+      { w: "с/наружи", t: "с" }, { w: "с/начала", t: "с" }, { w: "с/низу", t: "с" }, { w: "со/всем", t: "с" },
+      { w: "с/разу", t: "с" }, { w: "с/плеча", t: "с" }, { w: "с/права", t: "с" },
+      { w: "тот/час", t: "с" },
+
+      { w: "без/оглядки", t: "р" }, { w: "без/разбору", t: "р" }, { w: "без/спросу", t: "р" },
+      { w: "без/толку", t: "р" }, { w: "без/умолку", t: "р" }, { w: "бок/о/бок", t: "р" },
+      { w: "в/виде", t: "р" }, { w: "в/глаза", t: "р" }, { w: "в/заключение", t: "р" },
+      { w: "в/конце концов", t: "р" }, { w: "вне/зависимости", t: "р" }, { w: "в/обнимку", t: "р" },
+      { w: "в/обтяжку", t: "р" }, { w: "в/общем", t: "р" }, { w: "во/власти", t: "р" },
+      { w: "в/одиночку", t: "р" }, { w: "во/избежание", t: "р" }, { w: "в/открытую", t: "р" },
+      { w: "в/потьмах", t: "р" }, { w: "в/розницу", t: "р" }, { w: "в/сердцах", t: "р" },
+      { w: "всё/равно", t: "р" }, { w: "в/ходу", t: "р" }, { w: "в/упор", t: "р" }, { w: "в/целом", t: "р" },
+      { w: "как/будто", t: "р" }, { w: "как/раз", t: "р" }, { w: "как/только", t: "р" },
+      { w: "к/вечеру", t: "р" }, { w: "к/утру", t: "р" },
+      { w: "на/бегу", t: "р" }, { w: "на/вид", t: "р" }, { w: "на/виду", t: "р" }, { w: "на/глаз", t: "р" },
+      { w: "на/глазок", t: "р" }, { w: "на/днях", t: "р" }, { w: "на/лету", t: "р" }, { w: "на/миг", t: "р" },
+      { w: "на/ощупь", t: "р" }, { w: "на/радостях", t: "р" }, { w: "на/редкость", t: "р" },
+      { w: "на/совесть", t: "р" }, { w: "на/убыль", t: "р" }, { w: "на/ходу", t: "р" },
+      { w: "по/временам", t: "р" }, { w: "по/двое", t: "р" }, { w: "по/крайней мере", t: "р" },
+      { w: "по/мере", t: "р" }, { w: "по/одному", t: "р" }, { w: "по/очереди", t: "р" },
+      { w: "по/памяти", t: "р" }, { w: "по/праву", t: "р" }, { w: "по/совести", t: "р" },
+      { w: "по/ходу", t: "р" }, { w: "по/трое", t: "р" }, { w: "про/себя", t: "р" },
+      { w: "с/виду", t: "р" }, { w: "со/временем", t: "р" },
+      { w: "с/полуслова", t: "р" }, { w: "с/разбегу", t: "р" }, { w: "с/размаху", t: "р" }, { w: "с/ходу", t: "р" }
+    ];
+
+    // ——— DOM ———
+    const cells = document.querySelectorAll('.cell');
+    const currentWordEl = document.getElementById('current-word');
+    const btnSlitno = document.getElementById('btn-slitno');
+    const btnRazdelno = document.getElementById('btn-razdelno');
+    const nextBtn = document.getElementById('next-btn');
+    const statusEl = document.getElementById('status');
+    const resetBtn = document.getElementById('reset');
+    const toggleBotBtn = document.getElementById('toggle-bot');
+    const finalScreen = document.getElementById('final-screen');
+    const scoreEl = document.getElementById('score');
+    const showErrorsBtn = document.getElementById('show-errors-btn');
+    const errorsList = document.getElementById('errors-list');
+
+    // ——— СОСТОЯНИЕ ———
+    let currentWord = null;
+    let currentPlayer = 'x'; // x = человек (всегда), o = человек или бот
+    let board = Array(49).fill(null);
+    let moveHistory = [];
+    let isBotMode = false; // по умолчанию — 2 игрока
+    let isBotThinking = false;
+
+    // Счёт
+    let stats = {
+      x: { correct: 0, total: 0 },
+      o: { correct: 0, total: 0 }
+    };
+    let errors = [];
+
+    // ——— ОБРАБОТЧИКИ ———
+    btnSlitno.addEventListener('click', () => checkAnswer('с'));
+    btnRazdelno.addEventListener('click', () => checkAnswer('р'));
+    nextBtn.addEventListener('click', nextQuestion);
+    resetBtn.addEventListener('click', resetGame);
+    toggleBotBtn.addEventListener('click', toggleBotMode);
+    showErrorsBtn.addEventListener('click', toggleErrors);
+
+    // ——— ПЕРЕКЛЮЧЕНИЕ РЕЖИМА ———
+    function toggleBotMode() {
+      isBotMode = !isBotMode;
+      toggleBotBtn.textContent = isBotMode ? '👥 2 игрока' : '🤖 С ботом';
+      resetGame();
+    }
+
+    // ——— ОСНОВНАЯ ЛОГИКА ———
+    function getRandomWord() {
+      return WORDS[Math.floor(Math.random() * WORDS.length)];
+    }
+
+    function isGameOver() {
+      return board.every(cell => cell !== null);
+    }
+
+    function nextQuestion() {
+      if (isGameOver()) {
+        showFinalScreen();
+        return;
+      }
+
+      // Если ходит бот — он сам делает ход
+      if (isBotMode && currentPlayer === 'o') {
+        botTurn();
+        return;
+      }
+
+      currentWord = getRandomWord();
+      currentWordEl.textContent = currentWord.w;
+      currentWordEl.classList.add('pulse');
+      setTimeout(() => currentWordEl.classList.remove('pulse'), 600);
+
+      btnSlitno.disabled = false;
+      btnRazdelno.disabled = false;
+      nextBtn.style.display = 'none';
+
+      // Деактивируем клетки
+      cells.forEach(cell => {
+        cell.classList.remove('available');
+        cell.onclick = null;
+      });
+
+      statusEl.innerHTML = `Ходит: ${currentPlayer === 'x' ? '❌' : '⭕'} — ответь на слово`;
+    }
+
+    function checkAnswer(answer) {
+      if (!currentWord || isBotThinking) return;
+
+      btnSlitno.disabled = true;
+      btnRazdelno.disabled = true;
+
+      const playerKey = currentPlayer;
+      stats[playerKey].total++;
+
+      const isCorrect = answer === currentWord.t;
+
+      if (isCorrect) {
+        stats[playerKey].correct++;
+        statusEl.innerHTML = `✅ Верно! Ход ${currentPlayer === 'x' ? '❌' : '⭕'} — выбери клетку`;
+
+        // Активируем свободные клетки
+        cells.forEach((cell, i) => {
+          if (board[i] === null) cell.classList.add('available');
+        });
+
+        // Разрешаем выбор клетки — только один раз
+        cells.forEach(cell => {
+          cell.onclick = () => {
+            const idx = +cell.dataset.index;
+            if (board[idx] !== null) return;
+
+            board[idx] = currentPlayer;
+            cell.textContent = currentPlayer === 'x' ? '❌' : '⭕';
+            cell.classList.add(currentPlayer);
+            cell.classList.remove('available');
+
+            moveHistory.push({ player: currentPlayer, index: idx });
+
+            // Деактивируем клетки
+            cells.forEach(c => {
+              c.onclick = null;
+              c.classList.remove('available');
+            });
+
+            // Передаём ход
+            currentPlayer = currentPlayer === 'x' ? 'o' : 'x';
+            nextQuestion(); // → сразу следующий ход (бот или человек)
+          };
+        });
+      } else {
+        // Ошибка
+        errors.push({
+          word: currentWord.w,
+          yourAnswer: answer === 'с' ? 'слитно' : 'раздельно',
+          correctAnswer: currentWord.t === 'с' ? 'слитно' : 'раздельно'
+        });
+
+        const nextPlayerSymbol = currentPlayer === 'x' ? '⭕' : '❌';
+        statusEl.innerHTML = `❗ Ошибка. Ход переходит к ${nextPlayerSymbol}.`;
+
+        // Деактивируем клетки
+        cells.forEach(cell => {
+          cell.classList.remove('available');
+          cell.onclick = null;
+        });
+
+        // Передаём ход
+        currentPlayer = currentPlayer === 'x' ? 'o' : 'x';
+
+        // Через паузу — следующий ход
+        setTimeout(() => {
+          nextQuestion();
+        }, 1000);
+      }
+    }
+
+    // ——— ХОД БОТА ———
+    function botTurn() {
+      if (isBotThinking) return;
+      isBotThinking = true;
+
+      // Симулируем «размышление»
+      statusEl.innerHTML = `🤖 Бот думает <span class="thinking"></span><span class="thinking"></span><span class="thinking"></span>`;
+
+      // Через 1.2 сек — бот «отвечает»
+      setTimeout(() => {
+        currentWord = getRandomWord();
+        currentWordEl.textContent = currentWord.w;
+        currentWordEl.classList.add('pulse');
+        setTimeout(() => currentWordEl.classList.remove('pulse'), 600);
+
+        // Бот отвечает с вероятностью 80% правильно (настраивается)
+        const correctAnswer = currentWord.t;
+        const shouldAnswerCorrectly = Math.random() < 0.8; // 80% точность
+        const botAnswer = shouldAnswerCorrectly ? correctAnswer : (correctAnswer === 'с' ? 'р' : 'с');
+
+        statusEl.innerHTML = `🤖 Бот выбрал: <b>${botAnswer === 'с' ? 'слитно' : 'раздельно'}</b>`;
+
+        // Небольшая пауза перед результатом
+        setTimeout(() => {
+          const isCorrect = botAnswer === correctAnswer;
+
+          if (isCorrect) {
+            stats.o.correct++;
+            statusEl.innerHTML = `✅ Бот угадал! Ход ⭕ — выбери клетку`;
+
+            // Подсвечиваем клетки для бота (автоматически выберет через 1 сек)
+            cells.forEach((cell, i) => {
+              if (board[i] === null) cell.classList.add('available');
+            });
+
+            // Через 1 сек бот выбирает случайную свободную клетку
+            setTimeout(() => {
+              const freeCells = [];
+              cells.forEach((cell, i) => {
+                if (board[i] === null) freeCells.push(i);
+              });
+
+              if (freeCells.length > 0) {
+                const randomIdx = freeCells[Math.floor(Math.random() * freeCells.length)];
+                const cell = cells[randomIdx];
+
+                board[randomIdx] = 'o';
+                cell.textContent = '⭕';
+                cell.classList.add('o');
+                cell.classList.remove('available');
+
+                moveHistory.push({ player: 'o', index: randomIdx });
+              }
+
+              // Деактивируем клетки
+              cells.forEach(c => {
+                c.onclick = null;
+                c.classList.remove('available');
+              });
+
+              currentPlayer = 'x'; // ход возвращается человеку
+              isBotThinking = false;
+              nextQuestion();
+            }, 1000);
+          } else {
+            // Бот ошибся
+            errors.push({
+              word: currentWord.w,
+              yourAnswer: botAnswer === 'с' ? 'слитно' : 'раздельно',
+              correctAnswer: correctAnswer === 'с' ? 'слитно' : 'раздельно'
+            });
+
+            statusEl.innerHTML = `❗ Бот ошибся. Правильно: <b>${correctAnswer === 'с' ? 'слитно' : 'раздельно'}</b>. Ход переходит к ❌`;
+
+            currentPlayer = 'x';
+            isBotThinking = false;
+
+            // Через 1.5 сек — ход человека
+            setTimeout(() => {
+              nextQuestion();
+            }, 1500);
+          }
+        }, 600);
+      }, 1200);
+    }
+
+    // ——— ФИНАЛ ———
+    function showFinalScreen() {
+      const totalCorrect = stats.x.correct + stats.o.correct;
+      const totalErrors = errors.length;
+
+      let scoreHTML = `
+        <div class="player-score x">❌ (ты): ${stats.x.correct} / ${stats.x.total} правильных</div>
+      `;
+      if (isBotMode) {
+        scoreHTML += `<div class="player-score o">🤖 Бот: ${stats.o.correct} / ${stats.o.total} правильных</div>`;
+      } else {
+        scoreHTML += `<div class="player-score o">⭕: ${stats.o.correct} / ${stats.o.total} правильных</div>`;
+      }
+      scoreHTML += `<div class="total-errors">📌 Всего ошибок: ${totalErrors}</div>`;
+
+      scoreEl.innerHTML = scoreHTML;
+
+      finalScreen.style.display = 'block';
+      document.getElementById('question-area').style.display = 'none';
+      statusEl.style.display = 'none';
+    }
+
+    function toggleErrors() {
+      if (errorsList.style.display === 'block') {
+        errorsList.style.display = 'none';
+        showErrorsBtn.textContent = '📋 Показать все ошибки';
+      } else {
+        errorsList.style.display = 'block';
+        showErrorsBtn.textContent = '🔼 Скрыть ошибки';
+
+        errorsList.innerHTML = errors.length === 0 
+          ? '<p>🎉 Ошибок нет! Отличная работа!</p>'
+          : errors.map((e, i) => `
+            <div class="error-item">
+              <div><b>${i+1}.</b> <span class="error-word">${e.word.replace(/\//g, ' ')}</span></div>
+              <div>Твой ответ: <span class="error-answer">${e.yourAnswer}</span></div>
+              <div>Правильно: <span class="error-correct">${e.correctAnswer}</span></div>
+            </div>
+          `).join('');
+      }
+    }
+
+    function resetGame() {
+      board = Array(49).fill(null);
+      moveHistory = [];
+      stats = {
+        x: { correct: 0, total: 0 },
+        o: { correct: 0, total: 0 }
+      };
+      errors = [];
+      currentPlayer = 'x';
+      isBotThinking = false;
+
+      cells.forEach(cell => {
+        cell.textContent = '';
+        cell.className = 'cell';
+        cell.onclick = null;
+        cell.dataset.num = +cell.dataset.index + 1;
+      });
+
+      finalScreen.style.display = 'none';
+      document.getElementById('question-area').style.display = 'block';
+      statusEl.style.display = 'block';
+      statusEl.textContent = isBotMode ? 'Ходит: ❌' : 'Ходит: ❌';
+
+      nextQuestion();
+    }
+
+    // ——— СТАРТ ———
+    resetGame();
+  </script>
+</body>
+</html>

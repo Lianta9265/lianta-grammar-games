@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Космический Доббль: Лжевводные</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(135deg, #0a0c2c, #0d1b3a, #1a1a2e);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #fff;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* === Мерцающий космос === */
+    .stars, .stars::before, .stars::after {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      content: "";
+      background-image:
+        radial-gradient(2px 2px at 15% 20%, #fff, transparent),
+        radial-gradient(1px 1px at 35% 70%, #fff, transparent),
+        radial-gradient(2px 2px at 75% 40%, #fff, transparent),
+        radial-gradient(1px 1px at 85% 80%, #fff, transparent),
+        radial-gradient(1px 1px at 50% 50%, #fff, transparent),
+        radial-gradient(2px 2px at 25% 85%, #fff, transparent),
+        radial-gradient(1px 1px at 90% 15%, #fff, transparent);
+      opacity: 0.8;
+      pointer-events: none;
+      z-index: -2;
+    }
+    .stars::before {
+      opacity: 0.5;
+      transform: translateY(-8px) translateX(12px);
+      animation: drift 24s linear infinite;
+    }
+    .stars::after {
+      opacity: 0.3;
+      transform: translateY(10px) translateX(-16px);
+      animation: drift 36s linear infinite;
+    }
+    @keyframes drift {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-20px, 20px); }
+    }
+
+    .title {
+      text-align: center;
+      margin: 10px 0 20px;
+      font-size: 28px;
+      font-weight: 800;
+      text-shadow: 0 0 12px #6ee7ff, 0 0 20px rgba(110,231,255,0.5);
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 18px;
+      color: #a0d8ff;
+      max-width: 700px;
+      line-height: 1.4;
+    }
+
+    .score-board {
+      display: flex;
+      gap: 25px;
+      background: rgba(0,20,40,0.6);
+      padding: 16px 30px;
+      border-radius: 20px;
+      border: 1px solid rgba(110,231,255,0.3);
+      box-shadow: 0 0 20px rgba(0,100,200,0.2);
+      margin-bottom: 25px;
+    }
+
+    .score-item {
+      text-align: center;
+    }
+    .score-label { font-size: 16px; color: #a0d8ff; margin-bottom: 6px; }
+    .score-value { font-size: 32px; font-weight: 800; color: white; }
+
+    .success-message {
+      height: 30px;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #66ffcc;
+      text-shadow: 0 0 10px rgba(102,255,204,0.7);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    
+    .cards-container {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+
+      /* Чуть приподнимаем игровую зону, чтобы круги лучше "влезали" по высоте */
+      margin-top: -10px;
+    }
+
+    .card {
+      /* было 520x520; делаем адаптивно, чтобы влезало по ширине/высоте */
+      width: clamp(320px, 42vw, 520px);
+      height: clamp(320px, 42vw, 520px);
+      border-radius: 50%;
+      background: rgba(10, 20, 40, 0.4);
+      border: 3px solid rgba(110,231,255,0.4);
+      box-shadow: 
+        0 0 0 1px rgba(0,0,0,0.5),
+        0 20px 50px rgba(0,0,0,0.6),
+        inset 0 0 20px rgba(110,231,255,0.08);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-content: center;
+      padding: clamp(18px, 4vw, 40px);
+      position: relative;
+      overflow: hidden;
+    }
+.card::before {
+      content: "";
+      position: absolute;
+      top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .word {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 180px;
+      height: 60px;
+      margin: 10px;
+      padding: 0 12px;
+      border-radius: 14px;
+      background: rgba(0, 30, 60, 0.7);
+      border: 1px solid rgba(100, 200, 255, 0.2);
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 800;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+      /* Тонкая чёрная обводка — для комфортного чтения */
+      -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.85);
+      text-stroke: 0.5px rgba(0, 0, 0, 0.85);
+      text-shadow: none;
+    }
+
+    /* ✨ Неон при наведении — мягко и красиво */
+    .word:hover {
+      transform: scale(1.06) translateY(-2px);
+      box-shadow: 
+        0 6px 16px rgba(0,0,0,0.4),
+        0 0 16px currentColor; /* ← неон подсветка */
+      z-index: 10;
+    }
+    .word:hover.blue { color: #4fd1ff; }
+    .word:hover.yellow { color: #ffff66; }
+    .word:hover.red { color: #ff5588; }
+
+    .word::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: 
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,0.15), transparent 50%),
+        linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+      pointer-events: none;
+    }
+
+    .word.matched {
+      animation: pulse 0.6s ease;
+      background: rgba(0, 80, 40, 0.9);
+      color: #66ffcc;
+      box-shadow: 0 0 24px rgba(102,255,204,0.7);
+    }
+
+    .word.error {
+      animation: shake 0.4s ease;
+      background: rgba(80, 10, 20, 0.9);
+      color: #ff6b9a;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+
+    #new-game-btn {
+      background: linear-gradient(135deg, #6ee7ff, #a78bfa);
+      color: #0a0a2a;
+      border: none;
+      padding: 14px 32px;
+      font-size: 20px;
+      font-weight: 800;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(110,231,255,0.4);
+      transition: all 0.2s;
+    }
+    #new-game-btn:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 8px 25px rgba(110,231,255,0.6);
+    }
+
+    /* === Финальное модальное окно === */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 5, 15, 0.88);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: rgba(10, 15, 35, 0.92);
+      border: 2px solid rgba(110,231,255,0.5);
+      border-radius: 20px;
+      width: 90%;
+      max-width: 600px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(66,158,255,0.3);
+    }
+
+    .modal h2 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #6ee7ff;
+      margin-bottom: 16px;
+      text-shadow: 0 0 12px rgba(110,231,255,0.6);
+    }
+
+    .modal .result-line {
+      font-size: 22px;
+      margin: 12px 0;
+      color: white;
+    }
+
+    .modal .mistakes-list {
+      margin-top: 20px;
+      text-align: left;
+      max-height: 180px;
+      overflow-y: auto;
+      padding: 10px;
+      background: rgba(0,10,30,0.5);
+      border-radius: 12px;
+    }
+    .modal .mistakes-list h3 {
+      margin-bottom: 10px;
+      color: #ff6b9a;
+      font-size: 18px;
+    }
+    .modal .mistake-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 16px;
+      border-bottom: 1px solid rgba(100,200,255,0.1);
+    }
+    .modal .mistake-item:last-child {
+      border-bottom: none;
+    }
+
+    .modal button {
+      margin-top: 20px;
+      background: linear-gradient(135deg, #6ee7ff, #a78bfa);
+      color: #0a0a2a;
+      border: none;
+      padding: 12px 28px;
+      font-size: 18px;
+      font-weight: 800;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(110,231,255,0.4);
+    }
+  
+    /* === Адаптив и "влезание" на телефоны === */
+    @media (max-width: 768px) {
+      body { padding: 12px; }
+      .title { margin: 6px 0 10px; font-size: 24px; }
+      .subtitle { margin-bottom: 12px; font-size: 16px; }
+      .score-board { margin-bottom: 14px; padding: 12px 16px; gap: 16px; flex-wrap: wrap; justify-content: center; }
+      .score-value { font-size: 28px; }
+      .success-message { margin-bottom: 12px; font-size: 18px; height: 26px; }
+      .cards-container { gap: 16px; margin-top: -6px; }
+      .word { min-width: 150px; height: 54px; font-size: 18px; margin: 8px; }
+    }
+
+    @media (max-width: 420px) {
+      .title { font-size: 21px; }
+      .word { min-width: 138px; height: 50px; font-size: 17px; }
+    }
+
+    @media (max-height: 700px) {
+      /* Если экран низкий — лучше дать небольшой скролл, чем обрезать круги */
+      body { overflow: auto; }
+    }
+
+  
+    /* === ДОП. КОМПАКТНОСТЬ (чтобы круги и кнопка 'Новая игра' точно помещались) === */
+    .title { margin: 6px 0 8px; }
+    .subtitle { margin-bottom: 8px; }
+    .score-board { margin-bottom: 10px; padding: 10px 16px; }
+    .success-message { margin-bottom: 8px; height: 24px; }
+
+    /* Поднимаем круги выше (можно усилить, если надо) */
+    .cards-container { margin-top: -52px; margin-bottom: 10px; gap: 18px; }
+
+    /* запас снизу, чтобы кнопка 'Новая игра' не упиралась в край */
+    body { padding-bottom: 28px; }
+
+    /* На низких экранах — мягкий скролл вместо обрезания */
+    @media (max-height: 820px) {
+      body { overflow: auto; }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+
+  <h1 class="title">🌌 Космический Доббль: ЛЖЕВВОДНЫЕ</h1>
+  <p class="subtitle">
+    Найди единственное совпадающее слово в двух полушариях. 
+    Всего 19 слов — каждое появляется ровно один раз!
+  </p>
+
+  <div class="score-board">
+    <div class="score-item">
+      <div class="score-label">⭐ Очки</div>
+      <div id="score-value" class="score-value">0</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">❌ Ошибки</div>
+      <div id="errors-value" class="score-value">0</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">📊 Итого</div>
+      <div id="final-value" class="score-value">0</div>
+    </div>
+  </div>
+
+  <div id="success-message" class="success-message"></div>
+
+  <div class="cards-container">
+    <div id="card1" class="card"></div>
+    <div id="card2" class="card"></div>
+  </div>
+
+  <button id="new-game-btn">🚀 Новая игра</button>
+
+  <!-- Финальное модальное окно -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+      <h2>✨ Миссия завершена!</h2>
+      <div class="result-line">✅ Правильно: <span id="final-correct">0</span> / 19</div>
+      <div class="result-line">❌ Ошибок: <span id="final-errors">0</span></div>
+      <div class="result-line">🌟 Финальный счёт: <span id="final-score">0</span></div>
+      
+      <div id="mistakes-list" class="mistakes-list" style="display:none;"></div>
+
+      <button id="restart-final-btn">▶️ Сыграть ещё раз</button>
+    </div>
+  </div>
+
+  <script>
+    const words = [
+      'вдобавок', 'к тому же', 'всё-таки', 'тем не менее', 'между тем', 
+      'в связи с этим', 'в связи с чем', 'при всём при том', 'в то же время', 
+      'то есть', 'в довершение', 'в конечном счёте', 'в результате', 
+      'в итоге', 'всё равно', 'в первую очередь', 'притом', 'причём', 'в конце концов'
+    ];
+
+    const DOUBT = ['всё-таки', 'тем не менее', 'между тем', 'при всём при том', 'в то же время', 'всё равно'];
+    const PROBABILITY = ['вдобавок', 'к тому же', 'в связи с этим', 'в связи с чем', 'в довершение', 'в первую очередь', 'притом', 'причём'];
+    const CERTAINTY = ['то есть', 'в конечном счёте', 'в результате', 'в итоге', 'в конце концов'];
+
+    let gameState = {
+      usedWords: [],
+      score: 0,
+      errors: 0,
+      currentGame: null,
+      isGameOver: false,
+      mistakeLog: new Map() // слово → количество ошибок
+    };
+
+    function getColorClass(word) {
+      if (DOUBT.includes(word)) return 'blue';
+      if (PROBABILITY.includes(word)) return 'yellow';
+      if (CERTAINTY.includes(word)) return 'red';
+      return 'blue';
+    }
+
+    function generateCards() {
+      if (gameState.isGameOver) return;
+
+      const unusedWords = words.filter(w => !gameState.usedWords.includes(w));
+      if (unusedWords.length === 0) {
+        endGame();
+        return;
+      }
+
+      const matchingWord = unusedWords[Math.floor(Math.random() * unusedWords.length)];
+      const pool = words.filter(w => w !== matchingWord);
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      const extras = shuffled.slice(0, 8);
+
+      const card1Words = [matchingWord, ...extras.slice(0, 4)].sort(() => Math.random() - 0.5);
+      const card2Words = [matchingWord, ...extras.slice(4, 8)].sort(() => Math.random() - 0.5);
+
+      gameState.currentGame = { card1Words, card2Words, matchingWord };
+      renderCards();
+    }
+
+    function renderCards() {
+      const card1 = document.getElementById('card1');
+      const card2 = document.getElementById('card2');
+
+      const baseColor = getColorClass(gameState.currentGame.matchingWord);
+      const altColors = ['blue', 'yellow', 'red'].filter(c => c !== baseColor);
+      const altColor = altColors[Math.floor(Math.random() * altColors.length)];
+
+      card1.innerHTML = gameState.currentGame.card1Words.map(word => {
+        const cls = (word === gameState.currentGame.matchingWord) ? baseColor : getColorClass(word);
+        return `<div class="word ${cls}" data-word="${word}">${word}</div>`;
+      }).join('');
+
+      card2.innerHTML = gameState.currentGame.card2Words.map(word => {
+        const cls = (word === gameState.currentGame.matchingWord) ? altColor : getColorClass(word);
+        return `<div class="word ${cls}" data-word="${word}">${word}</div>`;
+      }).join('');
+
+      document.querySelectorAll('.word').forEach(el => {
+        el.addEventListener('click', handleWordClick);
+      });
+    }
+
+    function handleWordClick(event) {
+      if (gameState.isGameOver) return;
+
+      const clickedWord = event.target.dataset.word;
+
+      if (clickedWord === gameState.currentGame.matchingWord) {
+        document.querySelectorAll(`[data-word="${clickedWord}"]`).forEach(el => {
+          el.classList.add('matched');
+        });
+
+        gameState.usedWords.push(clickedWord);
+        gameState.score++;
+        updateScore();
+
+        const msg = document.getElementById('success-message');
+        msg.textContent = `✅ «${clickedWord}» — верно!`;
+        msg.style.opacity = '1';
+
+        setTimeout(() => {
+          msg.style.opacity = '0';
+          generateCards();
+        }, 1000);
+      } else {
+        event.target.classList.add('error');
+        gameState.errors++;
+        // Записываем ошибку
+        gameState.mistakeLog.set(clickedWord, (gameState.mistakeLog.get(clickedWord) || 0) + 1);
+        updateScore();
+
+        setTimeout(() => {
+          event.target.classList.remove('error');
+        }, 500);
+      }
+    }
+
+    function updateScore() {
+      document.getElementById('score-value').textContent = gameState.score;
+      document.getElementById('errors-value').textContent = gameState.errors;
+      document.getElementById('final-value').textContent = gameState.score - gameState.errors;
+    }
+
+    function endGame() {
+      gameState.isGameOver = true;
+
+      // Заполняем финальное окно
+      document.getElementById('final-correct').textContent = gameState.score;
+      document.getElementById('final-errors').textContent = gameState.errors;
+      document.getElementById('final-score').textContent = gameState.score - gameState.errors;
+
+      const mistakesList = document.getElementById('mistakes-list');
+      if (gameState.mistakeLog.size > 0) {
+        let html = `<h3>Ошибки по словам:</h3>`;
+        Array.from(gameState.mistakeLog.entries())
+          .sort((a, b) => b[1] - a[1])
+          .forEach(([word, count]) => {
+            html += `<div class="mistake-item">
+              <span>${word}</span>
+              <span>× ${count}</span>
+            </div>`;
+          });
+        mistakesList.innerHTML = html;
+        mistakesList.style.display = 'block';
+      } else {
+        mistakesList.style.display = 'none';
+      }
+
+      // Показываем модалку
+      document.getElementById('modal-overlay').classList.add('show');
+    }
+
+    function resetGame() {
+      gameState = {
+        usedWords: [],
+        score: 0,
+        errors: 0,
+        currentGame: null,
+        isGameOver: false,
+        mistakeLog: new Map()
+      };
+      document.getElementById('modal-overlay').classList.remove('show');
+      updateScore();
+      generateCards();
+    }
+
+    // Кнопки
+    document.getElementById('new-game-btn').addEventListener('click', resetGame);
+    document.getElementById('restart-final-btn').addEventListener('click', resetGame);
+
+    // Запуск
+    generateCards();
+  </script>
+</body>
+</html>
